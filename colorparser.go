@@ -11,7 +11,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-// Main algorithm based on: https://github.com/deanm/css-color-parser-js
+// Inspired by https://github.com/deanm/css-color-parser-js
 
 var (
 	transparent = color.RGBA{}
@@ -24,6 +24,7 @@ var (
 	reAngleTurn = regexp.MustCompile(`^.+turn$`)
 )
 
+// Parse parses CSS color string and returns, if successful, a color.Color.
 func Parse(s string) (color.Color, error) {
 	input := s
 	s = strings.TrimSpace(strings.ToLower(s))
@@ -39,9 +40,12 @@ func Parse(s string) (color.Color, error) {
 	}
 
 	// Hexadecimal
-	c2, ok := parseHex(s)
-	if ok {
-		return c2, nil
+	if strings.HasPrefix(s, "#") {
+		c, ok := parseHex(s)
+		if ok {
+			return c, nil
+		}
+		return black, fmt.Errorf("Invalid hex color, %s", input)
 	}
 
 	op := strings.Index(s, "(")
@@ -50,6 +54,7 @@ func Parse(s string) (color.Color, error) {
 	if (op != -1) && (ep+1 == len(s)) {
 		fname := s[:op]
 		alpha := 1.0
+		okA := true
 		s = s[op+1 : ep]
 		var params []string
 		if strings.ContainsAny(s, ",") {
@@ -65,37 +70,20 @@ func Parse(s string) (color.Color, error) {
 
 		switch fname {
 		case "rgba":
-			if len(params) != 4 {
-				return black, fmt.Errorf("Invalid rgba() format, %v", input)
-			}
-			alpha, ok = parsePercentOrFloat(params[3])
-			if !ok {
-				return black, fmt.Errorf("Invalid rgba() format, %v", input)
-			}
-			params = params[:3]
 			fallthrough
 
 		case "rgb":
 			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("Invalid rgb() format, %v", input)
+				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
-			r, ok := parsePercentOr255(params[0])
-			if !ok {
-				return black, fmt.Errorf("Invalid rgb() format, %v", input)
-			}
-			g, ok := parsePercentOr255(params[1])
-			if !ok {
-				return black, fmt.Errorf("Invalid rgb() format, %v", input)
-			}
-			b, ok := parsePercentOr255(params[2])
-			if !ok {
-				return black, fmt.Errorf("Invalid rgb() format, %v", input)
-			}
+			r, okR := parsePercentOr255(params[0])
+			g, okG := parsePercentOr255(params[1])
+			b, okB := parsePercentOr255(params[2])
 			if len(params) == 4 {
-				alpha, ok = parsePercentOrFloat(params[3])
-				if !ok {
-					return black, fmt.Errorf("Invalid rgb() format, %v", input)
-				}
+				alpha, okA = parsePercentOrFloat(params[3])
+			}
+			if !okR || !okG || !okB || !okA {
+				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
 			return color.RGBA{
 				uint8(clamp0_1(r) * 255),
@@ -105,37 +93,20 @@ func Parse(s string) (color.Color, error) {
 			}, nil
 
 		case "hsla":
-			if len(params) != 4 {
-				return black, fmt.Errorf("Invalid hsla() format, %v", input)
-			}
-			alpha, ok = parsePercentOrFloat(params[3])
-			if !ok {
-				return black, fmt.Errorf("Invalid hsla() format, %v", input)
-			}
-			params = params[:3]
 			fallthrough
 
 		case "hsl":
 			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("Invalid hsl() format, %v", input)
+				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
-			h, ok := parseHue(params[0])
-			if !ok {
-				return black, fmt.Errorf("Invalid hsl() format, %v", input)
-			}
-			s, ok := parsePercentOrFloat(params[1])
-			if !ok {
-				return black, fmt.Errorf("Invalid hsl() format, %v", input)
-			}
-			l, ok := parsePercentOrFloat(params[2])
-			if !ok {
-				return black, fmt.Errorf("Invalid hsl() format, %v", input)
-			}
+			h, okH := parseHue(params[0])
+			s, okS := parsePercentOrFloat(params[1])
+			l, okL := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
-				alpha, ok = parsePercentOrFloat(params[3])
-				if !ok {
-					return black, fmt.Errorf("Invalid hsl() format, %v", input)
-				}
+				alpha, okA = parsePercentOrFloat(params[3])
+			}
+			if !okH || !okS || !okL || !okA {
+				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
 			r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
 			return color.RGBA{
@@ -147,27 +118,18 @@ func Parse(s string) (color.Color, error) {
 
 		case "hwb":
 			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("Invalid hwb() format, %v", input)
+				return black, fmt.Errorf("hwb() format needs 3 or 4 parameters, %s", input)
 			}
-			h, ok := parseHue(params[0])
-			if !ok {
-				return black, fmt.Errorf("Invalid hwb() format, %v", input)
-			}
-			w, ok := parsePercentOrFloat(params[1])
-			if !ok {
-				return black, fmt.Errorf("Invalid hwb() format, %v", input)
-			}
-			bk, ok := parsePercentOrFloat(params[2])
-			if !ok {
-				return black, fmt.Errorf("Invalid hwb() format, %v", input)
-			}
+			H, okH := parseHue(params[0])
+			W, okW := parsePercentOrFloat(params[1])
+			B, okB := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
-				alpha, ok = parsePercentOrFloat(params[3])
-				if !ok {
-					return black, fmt.Errorf("Invalid hwb() format, %v", input)
-				}
+				alpha, okA = parsePercentOrFloat(params[3])
 			}
-			r, g, b := hwbToRgb(normalizeAngle(h), clamp0_1(w), clamp0_1(bk))
+			if !okH || !okW || !okB || !okA {
+				return black, fmt.Errorf("Wrong hwb() components, %s", input)
+			}
+			r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
 			return color.RGBA{
 				uint8(r * 255),
 				uint8(g * 255),
@@ -176,11 +138,11 @@ func Parse(s string) (color.Color, error) {
 			}, nil
 
 		default:
-			return black, fmt.Errorf("Invalid color format, %v", input)
+			return black, fmt.Errorf("Invalid color format, %s", input)
 		}
 	}
 
-	return black, fmt.Errorf("Invalid color format, %v", input)
+	return black, fmt.Errorf("Invalid color format, %s", input)
 }
 
 // parseHex taken from https://github.com/fogleman/colormap with some modification
@@ -218,7 +180,7 @@ func parseHex(x string) (color.Color, bool) {
 	}, true
 }
 
-func hue2rgb(n1, n2, h float64) float64 {
+func hueToRgb(n1, n2, h float64) float64 {
 	h = math.Mod(h, 6)
 	if h < 1 {
 		return n1 + ((n2 - n1) * h)
@@ -232,7 +194,7 @@ func hue2rgb(n1, n2, h float64) float64 {
 	return n1
 }
 
-// h 0..360
+// h = 0..360
 // s, l = 0..1
 // r, g, b = 0..1
 func hslToRgb(h, s, l float64) (r, g, b float64) {
@@ -247,9 +209,9 @@ func hslToRgb(h, s, l float64) (r, g, b float64) {
 	}
 	n1 := 2*l - n2
 	h /= 60
-	r = clamp0_1(hue2rgb(n1, n2, h+2))
-	g = clamp0_1(hue2rgb(n1, n2, h))
-	b = clamp0_1(hue2rgb(n1, n2, h-2))
+	r = clamp0_1(hueToRgb(n1, n2, h+2))
+	g = clamp0_1(hueToRgb(n1, n2, h))
+	b = clamp0_1(hueToRgb(n1, n2, h-2))
 	return
 }
 
@@ -281,8 +243,7 @@ func parseFloat(s string) (float64, bool) {
 }
 
 func parsePercentOrFloat(s string) (float64, bool) {
-	x := []rune(s)
-	if string(x[len(x)-1]) == "%" {
+	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
 		if !ok {
 			return 0, false
@@ -293,8 +254,7 @@ func parsePercentOrFloat(s string) (float64, bool) {
 }
 
 func parsePercentOr255(s string) (float64, bool) {
-	x := []rune(s)
-	if string(x[len(x)-1]) == "%" {
+	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
 		if !ok {
 			return 0, false

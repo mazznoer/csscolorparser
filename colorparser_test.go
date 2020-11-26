@@ -29,15 +29,14 @@ func TestParseColor(t *testing.T) {
 	red := color.RGBA{255, 0, 0, 255}
 	redAlpha := color.RGBA{255, 0, 0, 127}
 
-	// TODO
-	// add more test data
 	testData := []colorPair{
 		{"transparent", color.RGBA{0, 0, 0, 0}},
 		{"red", red},
 		{"#f00", red},
 		{"#ff0000", red},
-		//{"#f007", redAlpha},
-		//{"#ff000077", redAlpha},
+		{"#f00f", red},
+		{"#ff0000ff", red},
+		//{"#ff000065", color.RGBA{255, 0, 0, 101}},
 		{"rgb(255,0,0)", red},
 		{"rgb(255 0 0)", red},
 		{"RGB( 255 , 0 , 0 )", red},
@@ -59,6 +58,7 @@ func TestParseColor(t *testing.T) {
 		{"hsl(0rad,100%,50%)", red},
 		{"hsl(1turn,100%,50%)", red},
 		{"hsl(4turn,100%,50%)", red},
+		{"HSL(270 0% 50%)", color.RGBA{127, 127, 127, 255}},
 		{"hwb(0 0% 0%)", red},
 		{"hwb(0 0% 0% 50%)", redAlpha},
 	}
@@ -69,13 +69,6 @@ func TestParseColor(t *testing.T) {
 			t.Errorf("Parse error: %s", d.in)
 			continue
 		}
-		/*r1, g1, b1, a1 := c.RGBA()
-		r2, g2, b2, a2 := d.out.RGBA()
-		c1 := rgba{r1, g1, b1, a1}
-		c2 := rgba{r2, g2, b2, a2}
-		if c1 != c2 {
-			t.Errorf("%s -> %v != %v", d.in, c1, c2)
-		}*/
 		if !isColorEqual(c, d.out) {
 			t.Errorf("%s -> %v != %v", d.in, d.out, c)
 		}
@@ -85,6 +78,8 @@ func TestParseColor(t *testing.T) {
 func TestEqualColors1(t *testing.T) {
 	data := []string{
 		"black",
+		"#000",
+		"#000000",
 		"rgb(0,0,0)",
 		"rgb(0% 0% 0%)",
 		"rgb(0 0 0 100%)",
@@ -159,10 +154,16 @@ func TestInvalidData(t *testing.T) {
 		"",
 		"bloodred",
 		"#78afzd",
+		"#fffff",
 		"rgb(255,0 0)",
 		"rgb(0,255,8s)",
+		"rgb(100%,z9%,75%)",
 		"rgb (127,255,0)",
+		"rgba(0 0)",
 		"hsl(90degs,100%,50%)",
+		"hsl(180 1 x%)",
+		"hsla(360)",
+		"hwb(Zdeg,50%,50%)",
 	}
 	for _, d := range testData {
 		c, err := Parse(d)
