@@ -26,8 +26,8 @@ func TestParseColor(t *testing.T) {
 		out color.Color
 	}
 
-	red := color.RGBA{255, 0, 0, 255}
-	redAlpha := color.RGBA{255, 0, 0, 127}
+	red := color.NRGBA{255, 0, 0, 255}
+	redAlpha := color.NRGBA{255, 0, 0, 127}
 
 	testData := []colorPair{
 		{"transparent", color.RGBA{0, 0, 0, 0}},
@@ -36,7 +36,7 @@ func TestParseColor(t *testing.T) {
 		{"#ff0000", red},
 		{"#f00f", red},
 		{"#ff0000ff", red},
-		//{"#ff000065", color.RGBA{255, 0, 0, 101}},
+		//{"#ff000065", color.NRGBA{255, 0, 0, 101}},
 		{"rgb(255,0,0)", red},
 		{"rgb(255 0 0)", red},
 		{"RGB( 255 , 0 , 0 )", red},
@@ -58,7 +58,7 @@ func TestParseColor(t *testing.T) {
 		{"hsl(0rad,100%,50%)", red},
 		{"hsl(1turn,100%,50%)", red},
 		{"hsl(4turn,100%,50%)", red},
-		{"HSL(270 0% 50%)", color.RGBA{127, 127, 127, 255}},
+		{"HSL(270 0% 50%)", color.NRGBA{127, 127, 127, 255}},
 		{"hwb(0 0% 0%)", red},
 		{"hwb(0 0% 0% 50%)", redAlpha},
 	}

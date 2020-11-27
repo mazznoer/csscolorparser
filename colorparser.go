@@ -85,7 +85,7 @@ func Parse(s string) (color.Color, error) {
 			if !okR || !okG || !okB || !okA {
 				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
-			return color.RGBA{
+			return color.NRGBA{
 				uint8(clamp0_1(r) * 255),
 				uint8(clamp0_1(g) * 255),
 				uint8(clamp0_1(b) * 255),
@@ -109,7 +109,7 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
 			r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
-			return color.RGBA{
+			return color.NRGBA{
 				uint8(r * 255),
 				uint8(g * 255),
 				uint8(b * 255),
@@ -130,15 +130,12 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong hwb() components, %s", input)
 			}
 			r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
-			return color.RGBA{
+			return color.NRGBA{
 				uint8(r * 255),
 				uint8(g * 255),
 				uint8(b * 255),
 				uint8(clamp0_1(alpha) * 255),
 			}, nil
-
-		default:
-			return black, fmt.Errorf("Invalid color format, %s", input)
 		}
 	}
 
