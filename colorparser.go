@@ -14,14 +14,8 @@ import (
 // Inspired by https://github.com/deanm/css-color-parser-js
 
 var (
-	transparent = color.RGBA{}
-	black       = color.RGBA{0, 0, 0, 255}
-
-	reHex       = regexp.MustCompile(`^#[0-9a-f]{3,}$`)
-	reAngleDeg  = regexp.MustCompile(`^.+deg$`)
-	reAngleGrad = regexp.MustCompile(`^.+grad$`)
-	reAngleRad  = regexp.MustCompile(`^.+rad$`)
-	reAngleTurn = regexp.MustCompile(`^.+turn$`)
+	black = color.RGBA{0, 0, 0, 255}
+	reHex = regexp.MustCompile(`^#[0-9a-f]{3,}$`)
 )
 
 // Parse parses CSS color string and returns, if successful, a color.Color.
@@ -30,7 +24,11 @@ func Parse(s string) (color.Color, error) {
 	s = strings.TrimSpace(strings.ToLower(s))
 
 	if s == "transparent" {
-		return transparent, nil
+		return color.RGBA{0, 0, 0, 0}, nil
+	}
+
+	if s == "rebeccapurple" {
+		return color.RGBA{102, 51, 153, 255}, nil
 	}
 
 	// Predefined name / keyword
@@ -113,7 +111,7 @@ func Parse(s string) (color.Color, error) {
 				uint8(r * 255),
 				uint8(g * 255),
 				uint8(b * 255),
-				uint8(alpha * 255),
+				uint8(clamp0_1(alpha) * 255),
 			}, nil
 
 		case "hwb":
@@ -142,11 +140,10 @@ func Parse(s string) (color.Color, error) {
 	return black, fmt.Errorf("Invalid color format, %s", input)
 }
 
-// parseHex taken from https://github.com/fogleman/colormap with some modification
-
+// Taken from https://github.com/fogleman/colormap with some modification
 func parseHex(x string) (color.Color, bool) {
 	if !reHex.MatchString(x) {
-		return transparent, false
+		return black, false
 	}
 	var r, g, b, a int
 	a = 255
@@ -167,7 +164,7 @@ func parseHex(x string) (color.Color, bool) {
 	case 9: // # rrggbbaa
 		fmt.Sscanf(x, "#%02x%02x%02x%02x", &r, &g, &b, &a)
 	default:
-		return transparent, false
+		return black, false
 	}
 	return color.NRGBA64{
 		uint16(r | r<<8),
@@ -267,11 +264,11 @@ func parsePercentOr255(s string) (float64, bool) {
 
 // Result angle in degrees (not normalized)
 func parseHue(s string) (float64, bool) {
-	if reAngleDeg.MatchString(s) {
+	if strings.HasSuffix(s, "deg") {
 		s = s[:len(s)-3]
 		return parseFloat(s)
 	}
-	if reAngleGrad.MatchString(s) {
+	if strings.HasSuffix(s, "grad") {
 		s = s[:len(s)-4]
 		f, ok := parseFloat(s)
 		if !ok {
@@ -279,7 +276,7 @@ func parseHue(s string) (float64, bool) {
 		}
 		return f / 400 * 360, true
 	}
-	if reAngleRad.MatchString(s) {
+	if strings.HasSuffix(s, "rad") {
 		s = s[:len(s)-3]
 		f, ok := parseFloat(s)
 		if !ok {
@@ -287,7 +284,7 @@ func parseHue(s string) (float64, bool) {
 		}
 		return f / math.Pi * 180, true
 	}
-	if reAngleTurn.MatchString(s) {
+	if strings.HasSuffix(s, "turn") {
 		s = s[:len(s)-4]
 		f, ok := parseFloat(s)
 		if !ok {
