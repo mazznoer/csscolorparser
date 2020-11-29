@@ -8,7 +8,7 @@
 
 Go (Golang) CSS color parser.
 
-It support W3C's CSS color module level 4
+It support W3C's CSS color module level 4.
 
 ```go
 import "github.com/mazznoer/csscolorparser"
@@ -23,8 +23,33 @@ if err != nil {
 	panic(err)
 }
 ```
-<!--
-TODO
-- all supported format
-- link playground
--->
+
+## Supported Format
+
+It support named colors, hexadecimal (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`), `rgb()`, `rgba()`, `hsl()`, `hsla()`, and `hwb()`.
+
+```
+lime
+#0f0
+#0f0f
+#00ff00
+#00ff00ff
+rgb(0,255,0)
+rgb(0% 100% 0)
+rgb(0 255 0 / 100%)
+rgba(0,255,0,1)
+hsl(120,100%,50%)
+hsl(120deg 100% 50%)
+hsl(-240 100% 50%)
+hsl(-240deg 100% 50%)
+hsl(0.3333turn 100% 50%)
+hsl(133.333grad 100% 50%)
+hsl(2.0944rad 100% 50%)
+hsla(120,100%,50%,100%)
+hwb(120 0% 0%)
+hwb(480deg 0% 0% / 100%)
+```
+
+## Try It Online
+
+[Go Playground](https://play.golang.org/p/7kb62KSARwa)
