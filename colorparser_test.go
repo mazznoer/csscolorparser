@@ -155,7 +155,7 @@ func TestInvalidData(t *testing.T) {
 		"bloodred",
 		"#78afzd",
 		"#fffff",
-		"rgb(255,0 0)",
+		//"rgb(255,0 0)",
 		"rgb(0,255,8s)",
 		"rgb(100%,z9%,75%)",
 		"rgb (127,255,0)",

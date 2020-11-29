@@ -54,17 +54,9 @@ func Parse(s string) (color.Color, error) {
 		alpha := 1.0
 		okA := true
 		s = s[op+1 : ep]
-		var params []string
-		if strings.ContainsAny(s, ",") {
-			s = strings.ReplaceAll(s, "/", ",")
-			params = strings.Split(s, ",")
-			for i, x := range params {
-				params[i] = strings.TrimSpace(x)
-			}
-		} else {
-			s = strings.ReplaceAll(s, "/", " ")
-			params = strings.Fields(s)
-		}
+		s = strings.ReplaceAll(s, ",", " ")
+		s = strings.ReplaceAll(s, "/", " ")
+		params := strings.Fields(s)
 
 		switch fname {
 		case "rgba":
