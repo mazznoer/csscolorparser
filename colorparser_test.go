@@ -34,6 +34,9 @@ func TestParseColor(t *testing.T) {
 		{"rgb(247,179,99,0.37)", color.NRGBA{247, 179, 99, 94}},
 		{"hsl(270 0% 50%)", color.NRGBA{127, 127, 127, 255}},
 		{"hwb(0 50% 50%)", color.NRGBA{127, 127, 127, 255}},
+		{"hsv(0 0% 50%)", color.NRGBA{127, 127, 127, 255}},
+		{"hsv(0 0% 100%)", color.NRGBA{255, 255, 255, 255}},
+		{"hsv(0 0% 19%)", color.NRGBA{48, 48, 48, 255}},
 	}
 	for _, d := range testData {
 		c, err := Parse(d.in)
@@ -60,6 +63,7 @@ func TestEqualColorsBlack(t *testing.T) {
 		"hsl(270,100%,0%)",
 		"hwb(90 0% 100%)",
 		"hwb(120deg 0% 100% 100%)",
+		"hsv(120 100% 0%)",
 	}
 	black := color.NRGBA{0, 0, 0, 255}
 	for _, d := range data {
@@ -90,6 +94,7 @@ func TestEqualColorsRed(t *testing.T) {
 		"hsl(360 100% 50%)",
 		"hwb(0 0% 0%)",
 		"hwb(360deg 0% 0% 100%)",
+		"hsv(0 100% 100%)",
 	}
 	red := color.NRGBA{255, 0, 0, 255}
 	for _, d := range data {
@@ -122,6 +127,7 @@ func TestEqualColorsLime(t *testing.T) {
 		"hsla(120,100%,50%,100%)",
 		"hwb(120 0% 0%)",
 		"hwb(480deg 0% 0% / 100%)",
+		"hsv(120 100% 100%)",
 	}
 	lime := color.NRGBA{0, 255, 0, 255}
 	for _, d := range data {
@@ -143,6 +149,7 @@ func TestEqualColorsLimeAlpha(t *testing.T) {
 		"hsl(120deg 100% 50% / 50%)",
 		"hsla(120,100%,50%,0.5)",
 		"hwb(120 0% 0% / 50%)",
+		"hsv(120 100% 100% / 50%)",
 	}
 	limeAlpha := color.NRGBA{0, 255, 0, 127}
 	for _, d := range data {
@@ -162,7 +169,8 @@ func TestInvalidData(t *testing.T) {
 		"#fffff",
 		"rgb(0,255,8s)",
 		"rgb(100%,z9%,75%)",
-		"rgb (127,255,0)",
+		//"rgb (127,255,0)",
+		"cmyk(1 0 0)",
 		"rgba(0 0)",
 		"hsl(90',100%,50%)",
 		"hsl(deg 100% 50%)",
@@ -172,6 +180,8 @@ func TestInvalidData(t *testing.T) {
 		"hsla(360)",
 		"hwb(Xrad,50%,50%)",
 		"hwb(270 0% 0% 0% 0%)",
+		"hsv(120 100% 100% 1 50%)",
+		"hsv(120 XXX 100%)",
 	}
 	for _, d := range testData {
 		c, err := Parse(d)

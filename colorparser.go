@@ -50,7 +50,7 @@ func Parse(s string) (color.Color, error) {
 	ep := strings.Index(s, ")")
 
 	if (op != -1) && (ep+1 == len(s)) {
-		fname := s[:op]
+		fname := strings.TrimSpace(s[:op])
 		alpha := 1.0
 		okA := true
 		s = s[op+1 : ep]
@@ -89,7 +89,7 @@ func Parse(s string) (color.Color, error) {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
-			h, okH := parseHue(params[0])
+			h, okH := parseAngle(params[0])
 			s, okS := parsePercentOrFloat(params[1])
 			l, okL := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
@@ -110,7 +110,7 @@ func Parse(s string) (color.Color, error) {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("hwb() format needs 3 or 4 parameters, %s", input)
 			}
-			H, okH := parseHue(params[0])
+			H, okH := parseAngle(params[0])
 			W, okW := parsePercentOrFloat(params[1])
 			B, okB := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
@@ -120,6 +120,27 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong hwb() components, %s", input)
 			}
 			r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
+			return color.NRGBA{
+				uint8(r * 255),
+				uint8(g * 255),
+				uint8(b * 255),
+				uint8(clamp0_1(alpha) * 255),
+			}, nil
+
+		case "hsv":
+			if len(params) != 3 && len(params) != 4 {
+				return black, fmt.Errorf("hsv() format needs 3 or 4 parameters, %s", input)
+			}
+			h, okH := parseAngle(params[0])
+			s, okS := parsePercentOrFloat(params[1])
+			v, okV := parsePercentOrFloat(params[2])
+			if len(params) == 4 {
+				alpha, okA = parsePercentOrFloat(params[3])
+			}
+			if !okH || !okS || !okV || !okA {
+				return black, fmt.Errorf("Wrong hsv() components, %s", input)
+			}
+			r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
 			return color.NRGBA{
 				uint8(r * 255),
 				uint8(g * 255),
@@ -213,6 +234,27 @@ func hwbToRgb(hue, white, black float64) (r, g, b float64) {
 	return
 }
 
+func hsvToHsl(H, S, V float64) (h, s, l float64) {
+	h = H
+	s = S
+	l = (2 - S) * V / 2
+	if l != 0 {
+		if l == 1 {
+			s = 0
+		} else if l < 0.5 {
+			s = S * V / (l * 2)
+		} else {
+			s = S * V / (2 - l*2)
+		}
+	}
+	return
+}
+
+func hsvToRgb(H, S, V float64) (r, g, b float64) {
+	h, s, l := hsvToHsl(H, S, V)
+	return hslToRgb(h, s, l)
+}
+
 func clamp0_1(t float64) float64 {
 	if t < 0 {
 		return 0
@@ -255,7 +297,7 @@ func parsePercentOr255(s string) (float64, bool) {
 }
 
 // Result angle in degrees (not normalized)
-func parseHue(s string) (float64, bool) {
+func parseAngle(s string) (float64, bool) {
 	if strings.HasSuffix(s, "deg") {
 		s = s[:len(s)-3]
 		return parseFloat(s)
