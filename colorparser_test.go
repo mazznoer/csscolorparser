@@ -114,7 +114,7 @@ func TestEqualColorsLime(t *testing.T) {
 		"#00ff00",
 		"#00ff00ff",
 		"rgb(0,255,0)",
-		"rgb(0% 100% 0)",
+		"rgb(0% 100% 0%)",
 		"rgb(0 255 0 / 100%)",
 		"rgba(0,255,0,1)",
 		"hsl(120,100%,50%)",
@@ -169,7 +169,6 @@ func TestInvalidData(t *testing.T) {
 		"#fffff",
 		"rgb(0,255,8s)",
 		"rgb(100%,z9%,75%)",
-		//"rgb (127,255,0)",
 		"cmyk(1 0 0)",
 		"rgba(0 0)",
 		"hsl(90',100%,50%)",
@@ -189,5 +188,50 @@ func TestInvalidData(t *testing.T) {
 			t.Errorf("It should fail, %s -> %v", d, c)
 		}
 		t.Log(err)
+	}
+}
+
+func TestParseAngle(t *testing.T) {
+	type pair struct {
+		in  string
+		out float64
+	}
+	testData := []pair{
+		{"360", 360},
+		{"127.356", 127.356},
+		{"+120deg", 120},
+		{"90deg", 90},
+		{"-127deg", -127},
+		{"100grad", 90},
+		{"1.5707963267948966rad", 90},
+		{"0.25turn", 90},
+		{"-0.25turn", -90},
+	}
+	for _, s := range testData {
+		d, ok := parseAngle(s.in)
+		if !ok {
+			t.Errorf("Parse error, %s", s.in)
+		}
+		if d != s.out {
+			t.Errorf("%s -> %v != %v", s.in, d, s.out)
+		}
+	}
+}
+
+func TestNormalizeAngle(t *testing.T) {
+	testData := [][2]float64{
+		{0, 0},
+		{360, 0},
+		{400, 40},
+		{1155, 75},
+		{-360, 0},
+		{-90, 270},
+		{-765, 315},
+	}
+	for _, s := range testData {
+		d := normalizeAngle(s[0])
+		if d != s[1] {
+			t.Errorf("%v -> %v != %v", s[0], d, s[1])
+		}
 	}
 }

@@ -26,7 +26,7 @@ if err != nil {
 
 ## Supported Format
 
-It support named colors, hexadecimal (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`), `rgb()`, `rgba()`, `hsl()`, `hsla()`, and `hwb()`.
+It support named colors, hexadecimal (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`), `rgb()`, `rgba()`, `hsl()`, `hsla()`, `hwb()`, and `hsv()`.
 
 ```
 lime
@@ -35,7 +35,7 @@ lime
 #00ff00
 #00ff00ff
 rgb(0,255,0)
-rgb(0% 100% 0)
+rgb(0% 100% 0%)
 rgb(0 255 0 / 100%)
 rgba(0,255,0,1)
 hsl(120,100%,50%)
@@ -48,6 +48,8 @@ hsl(2.0944rad 100% 50%)
 hsla(120,100%,50%,100%)
 hwb(120 0% 0%)
 hwb(480deg 0% 0% / 100%)
+hsv(120,100%,100%)
+hsv(120deg 100% 100% / 100%)
 ```
 
 ## Try It Online
