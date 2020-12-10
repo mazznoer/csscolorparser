@@ -47,13 +47,12 @@ func Parse(s string) (color.Color, error) {
 	}
 
 	op := strings.Index(s, "(")
-	ep := strings.Index(s, ")")
 
-	if (op != -1) && (ep+1 == len(s)) {
+	if (op != -1) && strings.HasSuffix(s, ")") {
 		fname := strings.TrimSpace(s[:op])
 		alpha := 1.0
 		okA := true
-		s = s[op+1 : ep]
+		s = s[op+1 : len(s)-1]
 		s = strings.ReplaceAll(s, ",", " ")
 		s = strings.ReplaceAll(s, "/", " ")
 		params := strings.Fields(s)
