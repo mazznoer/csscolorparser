@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -13,10 +12,7 @@ import (
 
 // Inspired by https://github.com/deanm/css-color-parser-js
 
-var (
-	black = color.RGBA{0, 0, 0, 255}
-	reHex = regexp.MustCompile(`^#[0-9a-f]{3,}$`)
-)
+var black = color.RGBA{0, 0, 0, 255}
 
 // Parse parses CSS color string and returns, if successful, a color.Color.
 func Parse(s string) (color.Color, error) {
@@ -39,7 +35,7 @@ func Parse(s string) (color.Color, error) {
 
 	// Hexadecimal
 	if strings.HasPrefix(s, "#") {
-		c, ok := parseHex(s)
+		c, ok := parseHex(s[1:])
 		if ok {
 			return c, nil
 		}
@@ -152,38 +148,44 @@ func Parse(s string) (color.Color, error) {
 	return black, fmt.Errorf("Invalid color format, %s", input)
 }
 
-// Taken from https://github.com/fogleman/colormap with some modification
-func parseHex(x string) (color.Color, bool) {
-	if !reHex.MatchString(x) {
-		return black, false
+// https://stackoverflow.com/questions/54197913/parse-hex-string-to-image-color
+
+func parseHex(s string) (c color.NRGBA, ok bool) {
+	c.A = 255
+	ok = true
+
+	hexToByte := func(b byte) byte {
+		switch {
+		case b >= '0' && b <= '9':
+			return b - '0'
+		case b >= 'a' && b <= 'f':
+			return b - 'a' + 10
+		case b >= 'A' && b <= 'F':
+			return b - 'A' + 10
+		}
+		ok = false
+		return 0
 	}
-	var r, g, b, a int
-	a = 255
-	switch len(x) {
-	case 4: // #rgb
-		fmt.Sscanf(x, "#%1x%1x%1x", &r, &g, &b)
-		r = (r << 4) | r
-		g = (g << 4) | g
-		b = (b << 4) | b
-	case 5: // #rgba
-		fmt.Sscanf(x, "#%1x%1x%1x%1x", &r, &g, &b, &a)
-		r = (r << 4) | r
-		g = (g << 4) | g
-		b = (b << 4) | b
-		a = (a << 4) | a
-	case 7: // #rrggbb
-		fmt.Sscanf(x, "#%02x%02x%02x", &r, &g, &b)
-	case 9: // # rrggbbaa
-		fmt.Sscanf(x, "#%02x%02x%02x%02x", &r, &g, &b, &a)
-	default:
-		return black, false
+
+	n := len(s)
+	if n == 6 || n == 8 {
+		c.R = hexToByte(s[0])<<4 + hexToByte(s[1])
+		c.G = hexToByte(s[2])<<4 + hexToByte(s[3])
+		c.B = hexToByte(s[4])<<4 + hexToByte(s[5])
+		if n == 8 {
+			c.A = hexToByte(s[6])<<4 + hexToByte(s[7])
+		}
+	} else if n == 3 || n == 4 {
+		c.R = hexToByte(s[0]) * 17
+		c.G = hexToByte(s[1]) * 17
+		c.B = hexToByte(s[2]) * 17
+		if n == 4 {
+			c.A = hexToByte(s[3]) * 17
+		}
+	} else {
+		ok = false
 	}
-	return color.NRGBA64{
-		uint16(r | r<<8),
-		uint16(g | g<<8),
-		uint16(b | b<<8),
-		uint16(a | a<<8),
-	}, true
+	return
 }
 
 func hueToRgb(n1, n2, h float64) float64 {
