@@ -29,6 +29,7 @@ func TestParseColor(t *testing.T) {
 		{"transparent", color.RGBA{0, 0, 0, 0}},
 		{"rebeccapurple", color.RGBA{102, 51, 153, 255}},
 		{"#ff00ff64", color.NRGBA{255, 0, 255, 100}},
+		{"ff00ff64", color.NRGBA{255, 0, 255, 100}},
 		{"rgb(247,179,99)", color.NRGBA{247, 179, 99, 255}},
 		{"rgb(50% 50% 50%)", color.NRGBA{127, 127, 127, 255}},
 		{"rgb(247,179,99,0.37)", color.NRGBA{247, 179, 99, 94}},

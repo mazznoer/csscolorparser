@@ -145,6 +145,11 @@ func Parse(s string) (color.Color, error) {
 		}
 	}
 
+	c2, ok2 := parseHex(s)
+	if ok2 {
+		return c2, nil
+	}
+
 	return black, fmt.Errorf("Invalid color format, %s", input)
 }
 
