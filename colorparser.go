@@ -6,8 +6,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-
-	"golang.org/x/image/colornames"
 )
 
 // Inspired by https://github.com/deanm/css-color-parser-js
@@ -23,14 +21,10 @@ func Parse(s string) (color.Color, error) {
 		return color.RGBA{0, 0, 0, 0}, nil
 	}
 
-	if s == "rebeccapurple" {
-		return color.RGBA{102, 51, 153, 255}, nil
-	}
-
 	// Predefined name / keyword
-	c, ok := colornames.Map[s]
+	c, ok := namedColors[s]
 	if ok {
-		return c, nil
+		return color.RGBA{c[0], c[1], c[2], 255}, nil
 	}
 
 	// Hexadecimal
