@@ -152,8 +152,6 @@ func parseHex(s string) (c color.NRGBA, ok bool) {
 			return b - '0'
 		case b >= 'a' && b <= 'f':
 			return b - 'a' + 10
-		case b >= 'A' && b <= 'F':
-			return b - 'A' + 10
 		}
 		ok = false
 		return 0
