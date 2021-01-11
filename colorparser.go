@@ -53,11 +53,7 @@ func Parse(s string) (color.Color, error) {
 		s = strings.ReplaceAll(s, "/", " ")
 		params := strings.Fields(s)
 
-		switch fname {
-		case "rgba":
-			fallthrough
-
-		case "rgb":
+		if fname == "rgb" || fname == "rgba" {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
@@ -77,10 +73,7 @@ func Parse(s string) (color.Color, error) {
 				uint8(clamp0_1(alpha) * 255),
 			}, nil
 
-		case "hsla":
-			fallthrough
-
-		case "hsl":
+		} else if fname == "hsl" || fname == "hsla" {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
@@ -101,7 +94,7 @@ func Parse(s string) (color.Color, error) {
 				uint8(clamp0_1(alpha) * 255),
 			}, nil
 
-		case "hwb":
+		} else if fname == "hwb" || fname == "hwba" {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("hwb() format needs 3 or 4 parameters, %s", input)
 			}
@@ -122,7 +115,7 @@ func Parse(s string) (color.Color, error) {
 				uint8(clamp0_1(alpha) * 255),
 			}, nil
 
-		case "hsv":
+		} else if fname == "hsv" || fname == "hsva" {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("hsv() format needs 3 or 4 parameters, %s", input)
 			}
