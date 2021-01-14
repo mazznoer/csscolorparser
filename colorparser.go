@@ -2,7 +2,6 @@ package csscolorparser
 
 import (
 	"fmt"
-	"image/color"
 	"math"
 	"strconv"
 	"strings"
@@ -10,21 +9,57 @@ import (
 
 // Inspired by https://github.com/deanm/css-color-parser-js
 
-var black = color.RGBA{0, 0, 0, 255}
+type Color struct {
+	R, G, B, A float64
+}
 
-// Parse parses CSS color string and returns, if successful, a color.Color.
-func Parse(s string) (color.Color, error) {
+func (c Color) RGBA() (r, g, b, a uint32) {
+	r = uint32(math.Round(c.R * 65535))
+	g = uint32(math.Round(c.G * 65535))
+	b = uint32(math.Round(c.B * 65535))
+	a = uint32(math.Round(c.A * 65535))
+	return
+}
+
+func (c Color) RGBA255() (r, g, b, a uint8) {
+	r = uint8(math.Round(c.R * 255))
+	g = uint8(math.Round(c.G * 255))
+	b = uint8(math.Round(c.B * 255))
+	a = uint8(math.Round(c.A * 255))
+	return
+}
+
+func (c Color) HexString() string {
+	r, g, b, a := c.RGBA255()
+	if a < 255 {
+		return fmt.Sprintf("#%02x%02x%02x%02x", r, g, b, a)
+	}
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+}
+
+func (c Color) RGBString() string {
+	r, g, b, _ := c.RGBA255()
+	if c.A < 1 {
+		return fmt.Sprintf("rgba(%v,%v,%v,%v)", r, g, b, c.A)
+	}
+	return fmt.Sprintf("rgb(%v,%v,%v)", r, g, b)
+}
+
+var black = Color{0, 0, 0, 1}
+
+// Parse parses CSS color string and returns, if successful, a Color.
+func Parse(s string) (Color, error) {
 	input := s
 	s = strings.TrimSpace(strings.ToLower(s))
 
 	if s == "transparent" {
-		return color.RGBA{0, 0, 0, 0}, nil
+		return Color{0, 0, 0, 0}, nil
 	}
 
 	// Predefined name / keyword
 	c, ok := namedColors[s]
 	if ok {
-		return color.RGBA{c[0], c[1], c[2], 255}, nil
+		return Color{float64(c[0]) / 255, float64(c[1]) / 255, float64(c[2]) / 255, 1}, nil
 	}
 
 	// Hexadecimal
@@ -60,11 +95,11 @@ func Parse(s string) (color.Color, error) {
 			if !okR || !okG || !okB || !okA {
 				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
-			return color.NRGBA{
-				uint8(clamp0_1(r) * 255),
-				uint8(clamp0_1(g) * 255),
-				uint8(clamp0_1(b) * 255),
-				uint8(clamp0_1(alpha) * 255),
+			return Color{
+				clamp0_1(r),
+				clamp0_1(g),
+				clamp0_1(b),
+				clamp0_1(alpha),
 			}, nil
 
 		} else if fname == "hsl" || fname == "hsla" {
@@ -81,12 +116,7 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 			}
 			r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
-			return color.NRGBA{
-				uint8(r * 255),
-				uint8(g * 255),
-				uint8(b * 255),
-				uint8(clamp0_1(alpha) * 255),
-			}, nil
+			return Color{r, g, b, clamp0_1(alpha)}, nil
 
 		} else if fname == "hwb" || fname == "hwba" {
 			if len(params) != 3 && len(params) != 4 {
@@ -102,12 +132,7 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong hwb() components, %s", input)
 			}
 			r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
-			return color.NRGBA{
-				uint8(r * 255),
-				uint8(g * 255),
-				uint8(b * 255),
-				uint8(clamp0_1(alpha) * 255),
-			}, nil
+			return Color{r, g, b, clamp0_1(alpha)}, nil
 
 		} else if fname == "hsv" || fname == "hsva" {
 			if len(params) != 3 && len(params) != 4 {
@@ -123,12 +148,7 @@ func Parse(s string) (color.Color, error) {
 				return black, fmt.Errorf("Wrong hsv() components, %s", input)
 			}
 			r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
-			return color.NRGBA{
-				uint8(r * 255),
-				uint8(g * 255),
-				uint8(b * 255),
-				uint8(clamp0_1(alpha) * 255),
-			}, nil
+			return Color{r, g, b, clamp0_1(alpha)}, nil
 		}
 	}
 
@@ -142,8 +162,8 @@ func Parse(s string) (color.Color, error) {
 
 // https://stackoverflow.com/questions/54197913/parse-hex-string-to-image-color
 
-func parseHex(s string) (c color.NRGBA, ok bool) {
-	c.A = 255
+func parseHex(s string) (c Color, ok bool) {
+	c.A = 1
 	ok = true
 
 	hexToByte := func(b byte) byte {
@@ -159,18 +179,18 @@ func parseHex(s string) (c color.NRGBA, ok bool) {
 
 	n := len(s)
 	if n == 6 || n == 8 {
-		c.R = hexToByte(s[0])<<4 + hexToByte(s[1])
-		c.G = hexToByte(s[2])<<4 + hexToByte(s[3])
-		c.B = hexToByte(s[4])<<4 + hexToByte(s[5])
+		c.R = float64(hexToByte(s[0])<<4+hexToByte(s[1])) / 255
+		c.G = float64(hexToByte(s[2])<<4+hexToByte(s[3])) / 255
+		c.B = float64(hexToByte(s[4])<<4+hexToByte(s[5])) / 255
 		if n == 8 {
-			c.A = hexToByte(s[6])<<4 + hexToByte(s[7])
+			c.A = float64(hexToByte(s[6])<<4+hexToByte(s[7])) / 255
 		}
 	} else if n == 3 || n == 4 {
-		c.R = hexToByte(s[0]) * 17
-		c.G = hexToByte(s[1]) * 17
-		c.B = hexToByte(s[2]) * 17
+		c.R = float64(hexToByte(s[0])*17) / 255
+		c.G = float64(hexToByte(s[1])*17) / 255
+		c.B = float64(hexToByte(s[2])*17) / 255
 		if n == 4 {
-			c.A = hexToByte(s[3]) * 17
+			c.A = float64(hexToByte(s[3])*17) / 255
 		}
 	} else {
 		ok = false

@@ -20,24 +20,40 @@ func isColorEqual(c1, c2 color.Color) bool {
 	return false
 }
 
+func equalStr(t *testing.T, a, b string) {
+	if a != b {
+		t.Errorf("%s != %s", a, b)
+	}
+}
+
+func TestColor(t *testing.T) {
+	a := Color{0, 0, 1, 1}
+	equalStr(t, a.HexString(), "#0000ff")
+	equalStr(t, a.RGBString(), "rgb(0,0,255)")
+
+	b := Color{0, 0, 1, 0.5}
+	equalStr(t, b.HexString(), "#0000ff80")
+	equalStr(t, b.RGBString(), "rgba(0,0,255,0.5)")
+}
+
 func TestParseColor(t *testing.T) {
 	type colorPair struct {
 		in  string
-		out color.Color
+		out [4]uint8
 	}
 	testData := []colorPair{
-		{"transparent", color.RGBA{0, 0, 0, 0}},
-		{"rebeccapurple", color.RGBA{102, 51, 153, 255}},
-		{"#ff00ff64", color.NRGBA{255, 0, 255, 100}},
-		{"ff00ff64", color.NRGBA{255, 0, 255, 100}},
-		{"rgb(247,179,99)", color.NRGBA{247, 179, 99, 255}},
-		{"rgb(50% 50% 50%)", color.NRGBA{127, 127, 127, 255}},
-		{"rgb(247,179,99,0.37)", color.NRGBA{247, 179, 99, 94}},
-		{"hsl(270 0% 50%)", color.NRGBA{127, 127, 127, 255}},
-		{"hwb(0 50% 50%)", color.NRGBA{127, 127, 127, 255}},
-		{"hsv(0 0% 50%)", color.NRGBA{127, 127, 127, 255}},
-		{"hsv(0 0% 100%)", color.NRGBA{255, 255, 255, 255}},
-		{"hsv(0 0% 19%)", color.NRGBA{48, 48, 48, 255}},
+		{"transparent", [4]uint8{0, 0, 0, 0}},
+		{"rebeccapurple", [4]uint8{102, 51, 153, 255}},
+		{"#ff00ff64", [4]uint8{255, 0, 255, 100}},
+		{"ff00ff64", [4]uint8{255, 0, 255, 100}},
+		{"rgb(247,179,99)", [4]uint8{247, 179, 99, 255}},
+		{"rgb(50% 50% 50%)", [4]uint8{128, 128, 128, 255}},
+		{"rgb(247,179,99,0.37)", [4]uint8{247, 179, 99, 94}},
+		{"hsl(270 0% 50%)", [4]uint8{128, 128, 128, 255}},
+		{"hwb(0 50% 50%)", [4]uint8{128, 128, 128, 255}},
+		{"hsv(0 0% 50%)", [4]uint8{128, 128, 128, 255}},
+		{"hsv(0 0% 100%)", [4]uint8{255, 255, 255, 255}},
+		{"hsv(0 0% 19%)", [4]uint8{48, 48, 48, 255}},
 	}
 	for _, d := range testData {
 		c, err := Parse(d.in)
@@ -45,8 +61,39 @@ func TestParseColor(t *testing.T) {
 			t.Errorf("Parse error: %s", d.in)
 			continue
 		}
-		if !isColorEqual(c, d.out) {
-			t.Errorf("%s -> %v != %v", d.in, d.out, c)
+		r, g, b, a := c.RGBA255()
+		rgba := [4]uint8{r, g, b, a}
+		if rgba != d.out {
+			t.Errorf("%s -> %v != %v", d.in, d.out, rgba)
+		}
+	}
+}
+
+func TestNamedColors(t *testing.T) {
+	data := [][2]string{
+		{"aliceblue", "#f0f8ff"},
+		{"bisque", "#ffe4c4"},
+		{"chartreuse", "#7fff00"},
+		{"coral", "#ff7f50"},
+		{"crimson", "#dc143c"},
+		{"dodgerblue", "#1e90ff"},
+		{"firebrick", "#b22222"},
+		{"gold", "#ffd700"},
+		{"hotpink", "#ff69b4"},
+		{"indigo", "#4b0082"},
+		{"lavender", "#e6e6fa"},
+		{"plum", "#dda0dd"},
+		{"salmon", "#fa8072"},
+		{"skyblue", "#87ceeb"},
+		{"tomato", "#ff6347"},
+		{"violet", "#ee82ee"},
+		{"yellowgreen", "#9acd32"},
+	}
+	for _, d := range data {
+		c, _ := Parse(d[0])
+		hex := c.HexString()
+		if hex != d[1] {
+			t.Errorf("%s != %s", hex, d[1])
 		}
 	}
 }
@@ -130,11 +177,13 @@ func TestEqualColorsLime(t *testing.T) {
 		"hwb(480deg 0% 0% / 100%)",
 		"hsv(120 100% 100%)",
 	}
-	lime := color.NRGBA{0, 255, 0, 255}
+	lime := [4]uint8{0, 255, 0, 255}
 	for _, d := range data {
 		c, _ := Parse(d)
-		if !isColorEqual(lime, c) {
-			t.Errorf("Not lime, %s -> %v", d, c)
+		r, g, b, a := c.RGBA255()
+		rgba := [4]uint8{r, g, b, a}
+		if rgba != lime {
+			t.Errorf("Not lime, %s -> %v", d, rgba)
 			break
 		}
 	}
@@ -142,7 +191,7 @@ func TestEqualColorsLime(t *testing.T) {
 
 func TestEqualColorsLimeAlpha(t *testing.T) {
 	data := []string{
-		"#00ff007f",
+		"#00ff0080",
 		"rgb(0,255,0,50%)",
 		"rgb(0% 100% 0% / 0.5)",
 		"rgba(0%,100%,0%,50%)",
@@ -152,11 +201,13 @@ func TestEqualColorsLimeAlpha(t *testing.T) {
 		"hwb(120 0% 0% / 50%)",
 		"hsv(120 100% 100% / 50%)",
 	}
-	limeAlpha := color.NRGBA{0, 255, 0, 127}
+	limeAlpha := [4]uint8{0, 255, 0, 128}
 	for _, d := range data {
 		c, _ := Parse(d)
-		if !isColorEqual(limeAlpha, c) {
-			t.Errorf("Not lime 0.5 alpha, %s -> %v", d, c)
+		r, g, b, a := c.RGBA255()
+		rgba := [4]uint8{r, g, b, a}
+		if rgba != limeAlpha {
+			t.Errorf("Not lime 0.5 alpha, %s -> %v", d, rgba)
 			break
 		}
 	}
