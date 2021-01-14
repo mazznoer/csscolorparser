@@ -198,8 +198,12 @@ func parseHex(s string) (c Color, ok bool) {
 	return
 }
 
+func modulo(x, y float64) float64 {
+	return math.Mod(math.Mod(x, y)+y, y)
+}
+
 func hueToRgb(n1, n2, h float64) float64 {
-	h = math.Mod(h, 6)
+	h = modulo(h, 6)
 	if h < 1 {
 		return n1 + ((n2 - n1) * h)
 	}
