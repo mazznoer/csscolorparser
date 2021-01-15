@@ -92,15 +92,15 @@ func Parse(s string) (Color, error) {
 			if len(params) == 4 {
 				alpha, okA = parsePercentOrFloat(params[3])
 			}
-			if !okR || !okG || !okB || !okA {
-				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
+			if okR && okG && okB && okA {
+				return Color{
+					clamp0_1(r),
+					clamp0_1(g),
+					clamp0_1(b),
+					clamp0_1(alpha),
+				}, nil
 			}
-			return Color{
-				clamp0_1(r),
-				clamp0_1(g),
-				clamp0_1(b),
-				clamp0_1(alpha),
-			}, nil
+			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 
 		} else if fname == "hsl" || fname == "hsla" {
 			if len(params) != 3 && len(params) != 4 {
@@ -112,11 +112,11 @@ func Parse(s string) (Color, error) {
 			if len(params) == 4 {
 				alpha, okA = parsePercentOrFloat(params[3])
 			}
-			if !okH || !okS || !okL || !okA {
-				return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
+			if okH && okS && okL && okA {
+				r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
+				return Color{r, g, b, clamp0_1(alpha)}, nil
 			}
-			r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
-			return Color{r, g, b, clamp0_1(alpha)}, nil
+			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 
 		} else if fname == "hwb" || fname == "hwba" {
 			if len(params) != 3 && len(params) != 4 {
@@ -128,11 +128,11 @@ func Parse(s string) (Color, error) {
 			if len(params) == 4 {
 				alpha, okA = parsePercentOrFloat(params[3])
 			}
-			if !okH || !okW || !okB || !okA {
-				return black, fmt.Errorf("Wrong hwb() components, %s", input)
+			if okH && okW && okB && okA {
+				r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
+				return Color{r, g, b, clamp0_1(alpha)}, nil
 			}
-			r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
-			return Color{r, g, b, clamp0_1(alpha)}, nil
+			return black, fmt.Errorf("Wrong hwb() components, %s", input)
 
 		} else if fname == "hsv" || fname == "hsva" {
 			if len(params) != 3 && len(params) != 4 {
@@ -144,14 +144,15 @@ func Parse(s string) (Color, error) {
 			if len(params) == 4 {
 				alpha, okA = parsePercentOrFloat(params[3])
 			}
-			if !okH || !okS || !okV || !okA {
-				return black, fmt.Errorf("Wrong hsv() components, %s", input)
+			if okH && okS && okV && okA {
+				r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
+				return Color{r, g, b, clamp0_1(alpha)}, nil
 			}
-			r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
-			return Color{r, g, b, clamp0_1(alpha)}, nil
+			return black, fmt.Errorf("Wrong hsv() components, %s", input)
 		}
 	}
 
+	// RGB hexadecimal format without '#' prefix
 	c2, ok2 := parseHex(s)
 	if ok2 {
 		return c2, nil
@@ -288,10 +289,10 @@ func parseFloat(s string) (float64, bool) {
 func parsePercentOrFloat(s string) (float64, bool) {
 	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
-		if !ok {
-			return 0, false
+		if ok {
+			return f / 100, true
 		}
-		return f / 100, true
+		return 0, false
 	}
 	return parseFloat(s)
 }
@@ -299,47 +300,43 @@ func parsePercentOrFloat(s string) (float64, bool) {
 func parsePercentOr255(s string) (float64, bool) {
 	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
-		if !ok {
-			return 0, false
+		if ok {
+			return f / 100, true
 		}
-		return f / 100, true
-	}
-	f, ok := parseFloat(s)
-	if !ok {
 		return 0, false
 	}
-	return f / 255, true
+	f, ok := parseFloat(s)
+	if ok {
+		return f / 255, true
+	}
+	return 0, false
 }
 
 // Result angle in degrees (not normalized)
 func parseAngle(s string) (float64, bool) {
 	if strings.HasSuffix(s, "deg") {
-		s = s[:len(s)-3]
-		return parseFloat(s)
+		return parseFloat(s[:len(s)-3])
 	}
 	if strings.HasSuffix(s, "grad") {
-		s = s[:len(s)-4]
-		f, ok := parseFloat(s)
-		if !ok {
-			return 0, false
+		f, ok := parseFloat(s[:len(s)-4])
+		if ok {
+			return f / 400 * 360, true
 		}
-		return f / 400 * 360, true
+		return 0, false
 	}
 	if strings.HasSuffix(s, "rad") {
-		s = s[:len(s)-3]
-		f, ok := parseFloat(s)
-		if !ok {
-			return 0, false
+		f, ok := parseFloat(s[:len(s)-3])
+		if ok {
+			return f / math.Pi * 180, true
 		}
-		return f / math.Pi * 180, true
+		return 0, false
 	}
 	if strings.HasSuffix(s, "turn") {
-		s = s[:len(s)-4]
-		f, ok := parseFloat(s)
-		if !ok {
-			return 0, false
+		f, ok := parseFloat(s[:len(s)-4])
+		if ok {
+			return f * 360, true
 		}
-		return f * 360, true
+		return 0, false
 	}
 	return parseFloat(s)
 }
