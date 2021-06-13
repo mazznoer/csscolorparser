@@ -1,3 +1,4 @@
+// Package csscolorparser provides function for parsing CSS color string as defined in the W3C's CSS color module level 4.
 package csscolorparser
 
 import (
@@ -9,10 +10,12 @@ import (
 
 // Inspired by https://github.com/deanm/css-color-parser-js
 
+// R, G, B, A values in the range 0..1
 type Color struct {
 	R, G, B, A float64
 }
 
+// Implement the Go color.Color interface.
 func (c Color) RGBA() (r, g, b, a uint32) {
 	r = uint32(math.Round(c.R * 65535))
 	g = uint32(math.Round(c.G * 65535))
@@ -21,6 +24,7 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 	return
 }
 
+// RGBA255 returns R, G, B, A values in the range 0..255
 func (c Color) RGBA255() (r, g, b, a uint8) {
 	r = uint8(math.Round(c.R * 255))
 	g = uint8(math.Round(c.G * 255))
@@ -29,6 +33,7 @@ func (c Color) RGBA255() (r, g, b, a uint8) {
 	return
 }
 
+// HexString returns CSS hexadecimal string.
 func (c Color) HexString() string {
 	r, g, b, a := c.RGBA255()
 	if a < 255 {
@@ -37,12 +42,13 @@ func (c Color) HexString() string {
 	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
+// RGBString returns CSS RGB string.
 func (c Color) RGBString() string {
 	r, g, b, _ := c.RGBA255()
 	if c.A < 1 {
-		return fmt.Sprintf("rgba(%v,%v,%v,%v)", r, g, b, c.A)
+		return fmt.Sprintf("rgba(%d,%d,%d,%v)", r, g, b, c.A)
 	}
-	return fmt.Sprintf("rgb(%v,%v,%v)", r, g, b)
+	return fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
 }
 
 var black = Color{0, 0, 0, 1}
