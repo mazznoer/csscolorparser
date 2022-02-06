@@ -17,9 +17,9 @@ type Color struct {
 
 // Implement the Go color.Color interface.
 func (c Color) RGBA() (r, g, b, a uint32) {
-	r = uint32(math.Round(c.R * 65535))
-	g = uint32(math.Round(c.G * 65535))
-	b = uint32(math.Round(c.B * 65535))
+	r = uint32(math.Round(c.R * c.A * 65535))
+	g = uint32(math.Round(c.G * c.A * 65535))
+	b = uint32(math.Round(c.B * c.A * 65535))
 	a = uint32(math.Round(c.A * 65535))
 	return
 }
