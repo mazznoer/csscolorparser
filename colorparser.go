@@ -51,6 +51,24 @@ func (c Color) RGBString() string {
 	return fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
 }
 
+// Implement the Go TextUnmarshaler interface
+func (c *Color) UnmarshalText(text []byte) error {
+	col, err := Parse(string(text))
+	if err != nil {
+		return err
+	}
+	c.R = col.R
+	c.G = col.G
+	c.B = col.B
+	c.A = col.A
+	return nil
+}
+
+// Implement the Go TextMarshaler interface
+func (c Color) MarshalText() ([]byte, error) {
+	return []byte(c.HexString()), nil
+}
+
 var black = Color{0, 0, 0, 1}
 
 // Parse parses CSS color string and returns, if successful, a Color.
