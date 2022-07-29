@@ -2,6 +2,7 @@ package csscolorparser
 
 import (
 	"image/color"
+	"strings"
 	"testing"
 )
 
@@ -70,6 +71,25 @@ func TestParseColor(t *testing.T) {
 }
 
 func TestNamedColors(t *testing.T) {
+	for name, rgb := range namedColors {
+		c, _ := Parse(name)
+		r, g, b, _ := c.RGBA255()
+		rgb_ := [3]uint8{r, g, b}
+		if rgb_ != rgb {
+			t.Errorf("%s != %s", rgb_, rgb)
+		}
+		if name == "aqua" || name == "cyan" || name == "fuchsia" || name == "magenta" {
+			continue
+		}
+		if strings.Contains(name, "gray") || strings.Contains(name, "grey") {
+			continue
+		}
+		name_, _ := c.Name()
+		if name_ != name {
+			t.Errorf("%s != %s", name_, name)
+		}
+	}
+
 	data := [][2]string{
 		{"aliceblue", "#f0f8ff"},
 		{"bisque", "#ffe4c4"},

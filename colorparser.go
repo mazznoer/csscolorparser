@@ -51,6 +51,18 @@ func (c Color) RGBString() string {
 	return fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
 }
 
+// Name returns name of this color if its available.
+func (c Color) Name() (string, bool) {
+	r, g, b, _ := c.RGBA255()
+	rgb := [3]uint8{r, g, b}
+	for k, v := range namedColors {
+		if v == rgb {
+			return k, true
+		}
+	}
+	return "", false
+}
+
 // Implement the Go TextUnmarshaler interface
 func (c *Color) UnmarshalText(text []byte) error {
 	col, err := Parse(string(text))
