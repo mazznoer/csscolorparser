@@ -81,6 +81,33 @@ func (c Color) MarshalText() ([]byte, error) {
 	return []byte(c.HexString()), nil
 }
 
+func fromLinear(x float64) float64 {
+	if x >= 0.0031308 {
+		return 1.055*math.Pow(x, 1.0/2.4) - 0.055
+	}
+	return 12.92 * x
+}
+
+func FromLinearRGB(r, g, b, a float64) Color {
+	return Color{fromLinear(r), fromLinear(g), fromLinear(b), a}
+}
+
+func FromOklab(l, a, b, alpha float64) Color {
+	l_ := math.Pow(l+0.3963377774*a+0.2158037573*b, 3)
+	m_ := math.Pow(l-0.1055613458*a-0.0638541728*b, 3)
+	s_ := math.Pow(l-0.0894841775*a-1.2914855480*b, 3)
+
+	R := 4.0767245293*l_ - 3.3072168827*m_ + 0.2307590544*s_
+	G := -1.2681437731*l_ + 2.6093323231*m_ - 0.3411344290*s_
+	B := -0.0041119885*l_ - 0.7034763098*m_ + 1.7068625689*s_
+
+	return FromLinearRGB(R, G, B, alpha)
+}
+
+func FromOklch(l, c, h, alpha float64) Color {
+	return FromOklab(l, c*math.Cos(h), c*math.Sin(h), alpha)
+}
+
 var black = Color{0, 0, 0, 1}
 
 // Parse parses CSS color string and returns, if successful, a Color.
@@ -122,11 +149,11 @@ func Parse(s string) (Color, error) {
 			if len(params) != 3 && len(params) != 4 {
 				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
-			r, okR := parsePercentOr255(params[0])
-			g, okG := parsePercentOr255(params[1])
-			b, okB := parsePercentOr255(params[2])
+			r, okR, _ := parsePercentOr255(params[0])
+			g, okG, _ := parsePercentOr255(params[1])
+			b, okB, _ := parsePercentOr255(params[2])
 			if len(params) == 4 {
-				alpha, okA = parsePercentOrFloat(params[3])
+				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okR && okG && okB && okA {
 				return Color{
@@ -143,10 +170,10 @@ func Parse(s string) (Color, error) {
 				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
 			}
 			h, okH := parseAngle(params[0])
-			s, okS := parsePercentOrFloat(params[1])
-			l, okL := parsePercentOrFloat(params[2])
+			s, okS, _ := parsePercentOrFloat(params[1])
+			l, okL, _ := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
-				alpha, okA = parsePercentOrFloat(params[3])
+				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okS && okL && okA {
 				r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
@@ -159,10 +186,10 @@ func Parse(s string) (Color, error) {
 				return black, fmt.Errorf("hwb() format needs 3 or 4 parameters, %s", input)
 			}
 			H, okH := parseAngle(params[0])
-			W, okW := parsePercentOrFloat(params[1])
-			B, okB := parsePercentOrFloat(params[2])
+			W, okW, _ := parsePercentOrFloat(params[1])
+			B, okB, _ := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
-				alpha, okA = parsePercentOrFloat(params[3])
+				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okW && okB && okA {
 				r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
@@ -175,16 +202,54 @@ func Parse(s string) (Color, error) {
 				return black, fmt.Errorf("hsv() format needs 3 or 4 parameters, %s", input)
 			}
 			h, okH := parseAngle(params[0])
-			s, okS := parsePercentOrFloat(params[1])
-			v, okV := parsePercentOrFloat(params[2])
+			s, okS, _ := parsePercentOrFloat(params[1])
+			v, okV, _ := parsePercentOrFloat(params[2])
 			if len(params) == 4 {
-				alpha, okA = parsePercentOrFloat(params[3])
+				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okS && okV && okA {
 				r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
 				return Color{r, g, b, clamp0_1(alpha)}, nil
 			}
 			return black, fmt.Errorf("Wrong hsv() components, %s", input)
+		} else if fname == "oklab" {
+			if len(params) != 3 && len(params) != 4 {
+				return black, fmt.Errorf("oklab() format needs 3 or 4 parameters, %s", input)
+			}
+			l, okL, _ := parsePercentOrFloat(params[0])
+			a, okA, fmtA := parsePercentOrFloat(params[1])
+			b, okB, fmtB := parsePercentOrFloat(params[2])
+			okAlpha := true
+			if len(params) == 4 {
+				alpha, okAlpha, _ = parsePercentOrFloat(params[3])
+			}
+			if okL && okA && okB && okAlpha {
+				if fmtA {
+					a = remap(a, -1.0, 1.0, -0.4, 0.4)
+				}
+				if fmtB {
+					b = remap(b, -1.0, 1.0, -0.4, 0.4)
+				}
+				return FromOklab(math.Max(l, 0), a, b, alpha), nil
+			}
+			return black, fmt.Errorf("Wrong oklab() components, %s", input)
+		} else if fname == "oklch" {
+			if len(params) != 3 && len(params) != 4 {
+				return black, fmt.Errorf("oklch() format needs 3 or 4 parameters, %s", input)
+			}
+			l, okL, _ := parsePercentOrFloat(params[0])
+			c, okC, fmtC := parsePercentOrFloat(params[1])
+			h, okH := parseAngle(params[2])
+			if len(params) == 4 {
+				alpha, okA, _ = parsePercentOrFloat(params[3])
+			}
+			if okL && okC && okH && okA {
+				if fmtC {
+					c = c * 0.4
+				}
+				return FromOklch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
+			}
+			return black, fmt.Errorf("Wrong oklch() components, %s", input)
 		}
 	}
 
@@ -322,30 +387,33 @@ func parseFloat(s string) (float64, bool) {
 	return f, err == nil
 }
 
-func parsePercentOrFloat(s string) (float64, bool) {
+// Returns (result, ok?, percentage?)
+func parsePercentOrFloat(s string) (float64, bool, bool) {
 	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
 		if ok {
-			return f / 100, true
+			return f / 100, true, true
 		}
-		return 0, false
+		return 0, false, true
 	}
-	return parseFloat(s)
+	f, ok := parseFloat(s)
+	return f, ok, false
 }
 
-func parsePercentOr255(s string) (float64, bool) {
+// Returns (result, ok?, percentage?)
+func parsePercentOr255(s string) (float64, bool, bool) {
 	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
 		if ok {
-			return f / 100, true
+			return f / 100, true, true
 		}
-		return 0, false
+		return 0, false, true
 	}
 	f, ok := parseFloat(s)
 	if ok {
-		return f / 255, true
+		return f / 255, true, false
 	}
-	return 0, false
+	return 0, false, false
 }
 
 // Result angle in degrees (not normalized)
@@ -383,4 +451,9 @@ func normalizeAngle(t float64) float64 {
 		t += 360
 	}
 	return t
+}
+
+// Map t which is in range [a, b] to range [c, d]
+func remap(t, a, b, c, d float64) float64 {
+	return (t-a)*((d-c)/(b-a)) + c
 }
