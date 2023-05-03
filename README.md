@@ -13,10 +13,10 @@
 
 * [Named colors](https://www.w3.org/TR/css-color-4/#named-colors)
 * RGB hexadecimal (with and without `#` prefix)
-     + Short format `#rgb`
-     + Short format with alpha `#rgba`
-     + Long format `#rrggbb`
-     + Long format with alpha `#rrggbbaa`
+  * Short format `#rgb`
+  * Short format with alpha `#rgba`
+  * Long format `#rrggbb`
+  * Long format with alpha `#rrggbbaa`
 * `rgb()` and `rgba()`
 * `hsl()` and `hsla()`
 * `hwb()`
@@ -26,7 +26,7 @@ Not yet supported: `lab()`, `lch()`.
 
 ### Example Color Format
 
-```
+```css
 transparent
 lime
 #0f0
@@ -61,7 +61,7 @@ import "github.com/mazznoer/csscolorparser"
 c, err := csscolorparser.Parse("gold")
 
 if err != nil {
-	panic(err)
+ panic(err)
 }
 
 fmt.Printf("R:%.3f, G:%.3f, B:%.3f, A:%.3f", c.R, c.G, c.B, c.A) // R:1.000, G:0.843, B:0.000, A:1.000
@@ -79,4 +79,3 @@ fmt.Println(c.RGBString()) // rgb(255,215,0)
 
 * [csscolorparser](https://github.com/mazznoer/csscolorparser-rs) (Rust)
 * [csscolorparser](https://github.com/deanm/css-color-parser-js) (Javascript)
-
