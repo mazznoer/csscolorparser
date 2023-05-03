@@ -31,4 +31,5 @@ jobs:
       run: go test -v -coverprofile coverage.out && go tool cover -html coverage.out -o coverage.html
 
     - name: Format
+      if: matrix.os == "ubuntu-latest"
       run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
