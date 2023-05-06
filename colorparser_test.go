@@ -116,6 +116,28 @@ func TestNamedColors(t *testing.T) {
 			t.Errorf("%s != %s", hex, d[1])
 		}
 	}
+
+	c, _ := Parse("#f87cba")
+	name, _ := c.Name()
+	equalStr(t, name, "")
+}
+
+func TestMarshalUnmarshal(t *testing.T) {
+	var c Color
+	err := c.UnmarshalText([]byte("gold"))
+	if err != nil || c.HexString() != "#ffd700" {
+		t.Errorf("failed")
+	}
+
+	encoding, _ := c.MarshalText()
+	if string(encoding) != "#ffd700" {
+		t.Errorf("failed")
+	}
+
+	err = c.UnmarshalText([]byte("golden"))
+	if err == nil {
+		t.Errorf("failed")
+	}
 }
 
 func TestEqualColorsBlack(t *testing.T) {
@@ -163,12 +185,16 @@ func TestEqualColorsRed(t *testing.T) {
 		"hwb(0 0% 0%)",
 		"hwb(360deg 0% 0% 100%)",
 		"hsv(0 100% 100%)",
+		"oklab(0.62796, 0.22486, 0.12585)",
+		"oklch(0.62796, 0.25768, 29.23388)",
 	}
-	red := color.NRGBA{255, 0, 0, 255}
+	red := [4]uint8{255, 0, 0, 255}
 	for _, d := range data {
 		c, _ := Parse(d)
-		if !isColorEqual(red, c) {
-			t.Errorf("Not red, %s -> %v", d, c)
+		r, g, b, a := c.RGBA255()
+		rgba := [4]uint8{r, g, b, a}
+		if rgba != red {
+			t.Errorf("Not red, %s -> %v", d, rgba)
 			break
 		}
 	}
@@ -196,6 +222,8 @@ func TestEqualColorsLime(t *testing.T) {
 		"hwb(120 0% 0%)",
 		"hwb(480deg 0% 0% / 100%)",
 		"hsv(120 100% 100%)",
+		"oklab(0.86644, -0.23389, 0.1795)",
+		"oklch(0.86644, 0.29483, 142.49535)",
 	}
 	lime := [4]uint8{0, 255, 0, 255}
 	for _, d := range data {
@@ -253,13 +281,16 @@ func TestInvalidData(t *testing.T) {
 		"hwb(270 0% 0% 0% 0%)",
 		"hsv(120 100% 100% 1 50%)",
 		"hsv(120 XXX 100%)",
+		"oklab(0,0)",
+		"oklab(0,0,x,0)",
+		"oklch(0,0,0,0,0)",
+		"oklch(0,0,0,x)",
 	}
 	for _, d := range testData {
 		c, err := Parse(d)
 		if err == nil {
 			t.Errorf("It should fail, %s -> %v", d, c)
 		}
-		t.Log(err)
 	}
 }
 
