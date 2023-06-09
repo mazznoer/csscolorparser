@@ -81,6 +81,21 @@ func (c Color) MarshalText() ([]byte, error) {
 	return []byte(c.HexString()), nil
 }
 
+func FromHsv(h, s, v, a float64) Color {
+	r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
+	return Color{r, g, b, clamp0_1(a)}
+}
+
+func FromHsl(h, s, l, a float64) Color {
+	r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
+	return Color{r, g, b, clamp0_1(a)}
+}
+
+func FromHwb(h, w, b, a float64) Color {
+	r, g, b := hwbToRgb(normalizeAngle(h), clamp0_1(w), clamp0_1(b))
+	return Color{r, g, b, clamp0_1(a)}
+}
+
 func fromLinear(x float64) float64 {
 	if x >= 0.0031308 {
 		return 1.055*math.Pow(x, 1.0/2.4) - 0.055
@@ -176,8 +191,7 @@ func Parse(s string) (Color, error) {
 				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okS && okL && okA {
-				r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
-				return Color{r, g, b, clamp0_1(alpha)}, nil
+				return FromHsl(h, s, l, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 
@@ -192,8 +206,7 @@ func Parse(s string) (Color, error) {
 				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okW && okB && okA {
-				r, g, b := hwbToRgb(normalizeAngle(H), clamp0_1(W), clamp0_1(B))
-				return Color{r, g, b, clamp0_1(alpha)}, nil
+				return FromHwb(H, W, B, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong hwb() components, %s", input)
 
@@ -208,8 +221,7 @@ func Parse(s string) (Color, error) {
 				alpha, okA, _ = parsePercentOrFloat(params[3])
 			}
 			if okH && okS && okV && okA {
-				r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
-				return Color{r, g, b, clamp0_1(alpha)}, nil
+				return FromHsv(h, s, v, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong hsv() components, %s", input)
 		} else if fname == "oklab" {
