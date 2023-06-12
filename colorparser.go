@@ -104,7 +104,7 @@ func fromLinear(x float64) float64 {
 }
 
 func FromLinearRGB(r, g, b, a float64) Color {
-	return Color{fromLinear(r), fromLinear(g), fromLinear(b), a}
+	return Color{fromLinear(r), fromLinear(g), fromLinear(b), clamp0_1(a)}
 }
 
 func FromOklab(l, a, b, alpha float64) Color {
