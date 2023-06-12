@@ -28,13 +28,36 @@ func equalStr(t *testing.T, a, b string) {
 }
 
 func TestColor(t *testing.T) {
-	a := Color{0, 0, 1, 1}
-	equalStr(t, a.HexString(), "#0000ff")
-	equalStr(t, a.RGBString(), "rgb(0,0,255)")
+	var c Color
 
-	b := Color{0, 0, 1, 0.5}
-	equalStr(t, b.HexString(), "#0000ff80")
-	equalStr(t, b.RGBString(), "rgba(0,0,255,0.5)")
+	c = Color{0, 0, 1, 1}
+	equalStr(t, c.HexString(), "#0000ff")
+	equalStr(t, c.RGBString(), "rgb(0,0,255)")
+
+	c = Color{0, 0, 1, 0.5}
+	equalStr(t, c.HexString(), "#0000ff80")
+	equalStr(t, c.RGBString(), "rgba(0,0,255,0.5)")
+
+	c = FromHwb(0, 0, 0, 1)
+	equalStr(t, c.HexString(), "#ff0000")
+
+	c = FromHwb(360, 0, 0, 1)
+	equalStr(t, c.HexString(), "#ff0000")
+
+	c = FromHsv(120, 1, 1, 1)
+	equalStr(t, c.HexString(), "#00ff00")
+
+	c = FromHsl(180, 1, 0.5, 1)
+	equalStr(t, c.HexString(), "#00ffff")
+
+	c = FromOklab(0.62796, 0.22486, 0.12585, 1)
+	equalStr(t, c.HexString(), "#ff0000")
+
+	c = FromOklch(0.62796, 0.25768, 0.51, 1)
+	equalStr(t, c.HexString(), "#ff0000")
+
+	c = FromOklch(0.86644, 0.29483, 2.487, 1)
+	equalStr(t, c.HexString(), "#00ff00")
 }
 
 func TestParseColor(t *testing.T) {
