@@ -38,6 +38,12 @@ func TestColor(t *testing.T) {
 	equalStr(t, c.HexString(), "#0000ff80")
 	equalStr(t, c.RGBString(), "rgba(0,0,255,0.5)")
 
+	c = Color{1.2001, 0.999, -0.001, 0.001}
+	c.Clamp()
+	if !isColorEqual(c, Color{1, 0.999, 0, 0.001}) {
+		t.Errorf("failed: %v", c)
+	}
+
 	c = FromHwb(0, 0, 0, 1)
 	equalStr(t, c.HexString(), "#ff0000")
 

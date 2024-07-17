@@ -1,6 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/mazznoer/csscolorparser/compare/v0.1.3...HEAD)
+## [Unreleased](https://github.com/mazznoer/csscolorparser/compare/v0.1.4...HEAD)
+
+### Added
+
+- `Clamp()`
+
+## v0.1.4
 
 ### Added
 

@@ -33,6 +33,13 @@ func (c Color) RGBA255() (r, g, b, a uint8) {
 	return
 }
 
+func (c *Color) Clamp() {
+	c.R = math.Max(math.Min(c.R, 1), 0)
+	c.G = math.Max(math.Min(c.G, 1), 0)
+	c.B = math.Max(math.Min(c.B, 1), 0)
+	c.A = math.Max(math.Min(c.A, 1), 0)
+}
+
 // HexString returns CSS hexadecimal string.
 func (c Color) HexString() string {
 	r, g, b, a := c.RGBA255()
