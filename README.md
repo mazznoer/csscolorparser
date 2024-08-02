@@ -1,9 +1,8 @@
-# Golang CSS Color Parser Library
+# Go Language CSS Color Parser Library
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/mazznoer/csscolorparser)](https://pkg.go.dev/github.com/mazznoer/csscolorparser)
-[![Build Status](https://github.com/mazznoer/csscolorparser/workflows/Go/badge.svg)](https://github.com/mazznoer/csscolorparser/actions)
+![Build Status](https://github.com/mazznoer/csscolorparser/actions/workflows/go.yml/badge.svg)
 [![go report](https://goreportcard.com/badge/github.com/mazznoer/csscolorparser)](https://goreportcard.com/report/github.com/mazznoer/csscolorparser)
-[![codecov](https://codecov.io/gh/mazznoer/csscolorparser/branch/master/graph/badge.svg)](https://codecov.io/gh/mazznoer/csscolorparser)
 
 [Go](https://www.golang.org/) library for parsing CSS color string as defined in the W3C's [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/).
 
