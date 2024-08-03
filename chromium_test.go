@@ -2,13 +2,12 @@ package csscolorparser
 
 import "testing"
 
-func TestBrowserChromium(t *testing.T) {
-	type testData struct {
-		colorStr   string
-		r, g, b, a uint8
-	}
+func Test_BrowserChromium(t *testing.T) {
 	// Randomly generated color string, parsed using Chromium 87.0.4280.66
-	data := []testData{
+	data := []struct {
+		s          string
+		r, g, b, a uint8
+	}{
 		{"#13EF", 17, 51, 238, 255},
 		{"#b42f", 187, 68, 34, 255},
 		{"#49e97851", 73, 233, 120, 81},
@@ -210,17 +209,9 @@ func TestBrowserChromium(t *testing.T) {
 		{"hsl(0.088turn,32.001%,103.668%)", 255, 255, 255, 255},
 		{"hsl(53.662,57.956%,60.528%)", 213, 200, 96, 255},
 	}
-	for i, d := range data {
-		c, err := Parse(d.colorStr)
-		if err != nil {
-			t.Errorf("Parse error: %s", d.colorStr)
-			continue
-		}
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		out := [4]uint8{d.r, d.g, d.b, d.a}
-		if rgba != out {
-			t.Errorf("(%d) %s -> %v != %v", i, d.colorStr, out, rgba)
-		}
+	for _, d := range data {
+		c, err := Parse(d.s)
+		test(t, err, nil)
+		test(t, arr8(c.RGBA255()), arr8(d.r, d.g, d.b, d.a))
 	}
 }

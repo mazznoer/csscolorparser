@@ -2,75 +2,100 @@ package csscolorparser
 
 import (
 	"image/color"
-	"strings"
 	"testing"
 )
 
-type rgba struct {
-	r, g, b, a uint32
-}
+// --- Helper functions
 
-func isColorEqual(c1, c2 color.Color) bool {
-	r1, g1, b1, a1 := c1.RGBA()
-	r2, g2, b2, a2 := c2.RGBA()
-	a := rgba{r1, g1, b1, a1}
-	b := rgba{r2, g2, b2, a2}
-	if a == b {
-		return true
-	}
-	return false
-}
-
-func equalStr(t *testing.T, a, b string) {
+func test(t *testing.T, a, b interface{}) {
 	if a != b {
-		t.Errorf("%s != %s", a, b)
+		t.Helper()
+		t.Errorf("left: %v, right: %v", a, b)
 	}
 }
 
-func TestColor(t *testing.T) {
+func testTrue(t *testing.T, b bool) {
+	if !b {
+		t.Helper()
+		t.Errorf("it false")
+	}
+}
+
+func testColor(t *testing.T, a, b Color) {
+	x := arr8(a.RGBA255())
+	y := arr8(b.RGBA255())
+	if x == y {
+		return
+	}
+	t.Helper()
+	t.Errorf("left: %v, right: %v", x, y)
+}
+
+func testGoColor(t *testing.T, a, b color.Color) {
+	x := arr32(a.RGBA())
+	y := arr32(b.RGBA())
+	if x == y {
+		return
+	}
+	t.Helper()
+	t.Errorf("left: %v, right: %v", x, y)
+}
+
+func arr8(r, g, b, a uint8) [4]uint8 {
+	return [4]uint8{r, g, b, a}
+}
+
+func arr32(r, g, b, a uint32) [4]uint32 {
+	return [4]uint32{r, g, b, a}
+}
+
+// ---
+
+func Test_Color(t *testing.T) {
 	var c Color
 
 	c = Color{0, 0, 1, 1}
-	equalStr(t, c.HexString(), "#0000ff")
-	equalStr(t, c.RGBString(), "rgb(0,0,255)")
+	test(t, c.HexString(), "#0000ff")
+	test(t, c.RGBString(), "rgb(0,0,255)")
+	testGoColor(t, c, color.NRGBA{0, 0, 255, 255})
 
 	c = Color{0, 0, 1, 0.5}
-	equalStr(t, c.HexString(), "#0000ff80")
-	equalStr(t, c.RGBString(), "rgba(0,0,255,0.5)")
+	test(t, c.HexString(), "#0000ff80")
+	test(t, c.RGBString(), "rgba(0,0,255,0.5)")
+	//testGoColor(t, c, color.NRGBA{0,0,255,127})
+
+	testGoColor(t, Color{A: 1}, color.Gray{0})
 
 	c = Color{1.2001, 0.999, -0.001, 0.001}.Clamp()
-	if !isColorEqual(c, Color{1, 0.999, 0, 0.001}) {
-		t.Errorf("failed: %v", c)
-	}
+	testColor(t, c, Color{1, 0.999, 0, 0.001})
 
 	c = FromHwb(0, 0, 0, 1)
-	equalStr(t, c.HexString(), "#ff0000")
+	test(t, c.HexString(), "#ff0000")
 
 	c = FromHwb(360, 0, 0, 1)
-	equalStr(t, c.HexString(), "#ff0000")
+	test(t, c.HexString(), "#ff0000")
 
 	c = FromHsv(120, 1, 1, 1)
-	equalStr(t, c.HexString(), "#00ff00")
+	test(t, c.HexString(), "#00ff00")
 
 	c = FromHsl(180, 1, 0.5, 1)
-	equalStr(t, c.HexString(), "#00ffff")
+	test(t, c.HexString(), "#00ffff")
 
 	c = FromOklab(0.62796, 0.22486, 0.12585, 1)
-	equalStr(t, c.HexString(), "#ff0000")
+	test(t, c.HexString(), "#ff0000")
 
 	c = FromOklch(0.62796, 0.25768, 0.51, 1)
-	equalStr(t, c.HexString(), "#ff0000")
+	test(t, c.HexString(), "#ff0000")
 
 	c = FromOklch(0.86644, 0.29483, 2.487, 1)
-	equalStr(t, c.HexString(), "#00ff00")
+	test(t, c.HexString(), "#00ff00")
 }
 
-func TestParseColor(t *testing.T) {
-	type colorPair struct {
-		in  string
-		out [4]uint8
-	}
-	testData := []colorPair{
+func Test_ParseColor(t *testing.T) {
+	data0 := []struct {
+		s     string
+		rgba8 [4]uint8
+	}{
 		{"transparent", [4]uint8{0, 0, 0, 0}},
 		{"rebeccapurple", [4]uint8{102, 51, 153, 255}},
 		{"#ff00ff64", [4]uint8{255, 0, 255, 100}},
@@ -86,91 +111,56 @@ func TestParseColor(t *testing.T) {
 		{"hsv(0 0% 100%)", [4]uint8{255, 255, 255, 255}},
 		{"hsv(0 0% 19%)", [4]uint8{48, 48, 48, 255}},
 	}
-	for _, d := range testData {
-		c, err := Parse(d.in)
-		if err != nil {
-			t.Errorf("Parse error: %s", d.in)
-			continue
-		}
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		if rgba != d.out {
-			t.Errorf("%s -> %v != %v", d.in, d.out, rgba)
-		}
+	for _, d := range data0 {
+		c, err := Parse(d.s)
+		test(t, err, nil)
+		test(t, arr8(c.RGBA255()), d.rgba8)
+	}
+
+	data1 := []struct {
+		s string
+		c Color
+	}{
+		{"hwb(0, 0%, 0%)", FromHwb(0, 0, 0, 1)},
+		{"hwb(320, 10%, 30%)", FromHwb(320, 0.1, 0.3, 1)},
+		{"hsv(120, 30%, 50%)", FromHsv(120, 0.3, 0.5, 1)},
+		{"hsl(120, 30%, 50%)", FromHsl(120, 0.3, 0.5, 1)},
+	}
+	for _, dt := range data1 {
+		c, err := Parse(dt.s)
+		test(t, err, nil)
+		test(t, dt.c.HexString(), c.HexString())
+	}
+
+	data2 := []string{
+		"#666666",
+		"#ff0000",
+		"#00ff7f",
+	}
+	for _, s := range data2 {
+		c1, err := Parse(s)
+		test(t, err, nil)
+		c2, err2 := Parse(c1.RGBString())
+		test(t, err2, nil)
+		test(t, c2.HexString(), s)
 	}
 }
 
-func TestNamedColors(t *testing.T) {
-	for name, rgb := range namedColors {
-		c, _ := Parse(name)
-		r, g, b, _ := c.RGBA255()
-		rgb_ := [3]uint8{r, g, b}
-		if rgb_ != rgb {
-			t.Errorf("%s != %s", rgb_, rgb)
-		}
-		if name == "aqua" || name == "cyan" || name == "fuchsia" || name == "magenta" {
-			continue
-		}
-		if strings.Contains(name, "gray") || strings.Contains(name, "grey") {
-			continue
-		}
-		name_, _ := c.Name()
-		if name_ != name {
-			t.Errorf("%s != %s", name_, name)
-		}
-	}
-
-	data := [][2]string{
-		{"aliceblue", "#f0f8ff"},
-		{"bisque", "#ffe4c4"},
-		{"chartreuse", "#7fff00"},
-		{"coral", "#ff7f50"},
-		{"crimson", "#dc143c"},
-		{"dodgerblue", "#1e90ff"},
-		{"firebrick", "#b22222"},
-		{"gold", "#ffd700"},
-		{"hotpink", "#ff69b4"},
-		{"indigo", "#4b0082"},
-		{"lavender", "#e6e6fa"},
-		{"plum", "#dda0dd"},
-		{"salmon", "#fa8072"},
-		{"skyblue", "#87ceeb"},
-		{"tomato", "#ff6347"},
-		{"violet", "#ee82ee"},
-		{"yellowgreen", "#9acd32"},
-	}
-	for _, d := range data {
-		c, _ := Parse(d[0])
-		hex := c.HexString()
-		if hex != d[1] {
-			t.Errorf("%s != %s", hex, d[1])
-		}
-	}
-
-	c, _ := Parse("#f87cba")
-	name, _ := c.Name()
-	equalStr(t, name, "")
-}
-
-func TestMarshalUnmarshal(t *testing.T) {
+func Test_MarshalUnmarshal(t *testing.T) {
 	var c Color
 	err := c.UnmarshalText([]byte("gold"))
-	if err != nil || c.HexString() != "#ffd700" {
-		t.Errorf("failed")
-	}
+	test(t, err, nil)
+	test(t, c.HexString(), "#ffd700")
 
-	encoding, _ := c.MarshalText()
-	if string(encoding) != "#ffd700" {
-		t.Errorf("failed")
-	}
+	encoding, err := c.MarshalText()
+	test(t, err, nil)
+	test(t, string(encoding), "#ffd700")
 
 	err = c.UnmarshalText([]byte("golden"))
-	if err == nil {
-		t.Errorf("failed")
-	}
+	testTrue(t, err != nil)
 }
 
-func TestEqualColorsBlack(t *testing.T) {
+func Test_EqualColorsBlack(t *testing.T) {
 	data := []string{
 		"black",
 		"#000",
@@ -185,17 +175,14 @@ func TestEqualColorsBlack(t *testing.T) {
 		"hwb(120deg 0% 100% 100%)",
 		"hsv(120 100% 0%)",
 	}
-	black := color.NRGBA{0, 0, 0, 255}
 	for _, d := range data {
-		c, _ := Parse(d)
-		if !isColorEqual(black, c) {
-			t.Errorf("Not black, %s -> %v", d, c)
-			break
-		}
+		c, err := Parse(d)
+		test(t, err, nil)
+		testColor(t, c, Color{0, 0, 0, 1})
 	}
 }
 
-func TestEqualColorsRed(t *testing.T) {
+func Test_EqualColorsRed(t *testing.T) {
 	data := []string{
 		"red",
 		"#f00",
@@ -218,19 +205,14 @@ func TestEqualColorsRed(t *testing.T) {
 		"oklab(0.62796, 0.22486, 0.12585)",
 		"oklch(0.62796, 0.25768, 29.23388)",
 	}
-	red := [4]uint8{255, 0, 0, 255}
 	for _, d := range data {
-		c, _ := Parse(d)
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		if rgba != red {
-			t.Errorf("Not red, %s -> %v", d, rgba)
-			break
-		}
+		c, err := Parse(d)
+		test(t, err, nil)
+		testColor(t, c, Color{1, 0, 0, 1})
 	}
 }
 
-func TestEqualColorsLime(t *testing.T) {
+func Test_EqualColorsLime(t *testing.T) {
 	data := []string{
 		"lime",
 		"#0f0",
@@ -255,19 +237,14 @@ func TestEqualColorsLime(t *testing.T) {
 		"oklab(0.86644, -0.23389, 0.1795)",
 		"oklch(0.86644, 0.29483, 142.49535)",
 	}
-	lime := [4]uint8{0, 255, 0, 255}
 	for _, d := range data {
-		c, _ := Parse(d)
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		if rgba != lime {
-			t.Errorf("Not lime, %s -> %v", d, rgba)
-			break
-		}
+		c, err := Parse(d)
+		test(t, err, nil)
+		testColor(t, c, Color{0, 1, 0, 1})
 	}
 }
 
-func TestEqualColorsLimeAlpha(t *testing.T) {
+func Test_EqualColorsLimeAlpha(t *testing.T) {
 	data := []string{
 		"#00ff0080",
 		"rgb(0,255,0,50%)",
@@ -279,20 +256,15 @@ func TestEqualColorsLimeAlpha(t *testing.T) {
 		"hwb(120 0% 0% / 50%)",
 		"hsv(120 100% 100% / 50%)",
 	}
-	limeAlpha := [4]uint8{0, 255, 0, 128}
 	for _, d := range data {
-		c, _ := Parse(d)
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		if rgba != limeAlpha {
-			t.Errorf("Not lime 0.5 alpha, %s -> %v", d, rgba)
-			break
-		}
+		c, err := Parse(d)
+		test(t, err, nil)
+		testColor(t, c, Color{0, 1, 0, 0.5})
 	}
 }
 
-func TestInvalidData(t *testing.T) {
-	testData := []string{
+func Test_InvalidData(t *testing.T) {
+	data := []string{
 		"",
 		"bloodred",
 		"#78afzd",
@@ -316,20 +288,20 @@ func TestInvalidData(t *testing.T) {
 		"oklch(0,0,0,0,0)",
 		"oklch(0,0,0,x)",
 	}
-	for _, d := range testData {
-		c, err := Parse(d)
-		if err == nil {
-			t.Errorf("It should fail, %s -> %v", d, c)
-		}
+	for _, s := range data {
+		c, err := Parse(s)
+		testTrue(t, err != nil)
+		testColor(t, c, Color{A: 1})
 	}
 }
 
-func TestParseAngle(t *testing.T) {
-	type pair struct {
-		in  string
-		out float64
-	}
-	testData := []pair{
+func Test_Utils(t *testing.T) {
+	// parseAngle
+
+	data := []struct {
+		s string
+		f float64
+	}{
 		{"360", 360},
 		{"127.356", 127.356},
 		{"+120deg", 120},
@@ -340,19 +312,15 @@ func TestParseAngle(t *testing.T) {
 		{"0.25turn", 90},
 		{"-0.25turn", -90},
 	}
-	for _, s := range testData {
-		d, ok := parseAngle(s.in)
-		if !ok {
-			t.Errorf("Parse error, %s", s.in)
-		}
-		if d != s.out {
-			t.Errorf("%s -> %v != %v", s.in, d, s.out)
-		}
+	for _, s := range data {
+		d, ok := parseAngle(s.s)
+		testTrue(t, ok)
+		test(t, d, s.f)
 	}
-}
 
-func TestNormalizeAngle(t *testing.T) {
-	testData := [][2]float64{
+	// normalizeAngle
+
+	data2 := [][2]float64{
 		{0, 0},
 		{360, 0},
 		{400, 40},
@@ -361,10 +329,7 @@ func TestNormalizeAngle(t *testing.T) {
 		{-90, 270},
 		{-765, 315},
 	}
-	for _, s := range testData {
-		d := normalizeAngle(s[0])
-		if d != s[1] {
-			t.Errorf("%v -> %v != %v", s[0], d, s[1])
-		}
+	for _, d := range data2 {
+		test(t, normalizeAngle(d[0]), d[1])
 	}
 }

@@ -2,13 +2,12 @@ package csscolorparser
 
 import "testing"
 
-func TestBrowserFirefox(t *testing.T) {
-	type testData struct {
-		colorStr   string
-		r, g, b, a uint8
-	}
+func Test_BrowserFirefox(t *testing.T) {
 	// Randomly generated color string, parsed using Mozilla Firefox 84.0.2
-	data := []testData{
+	data := []struct {
+		s          string
+		r, g, b, a uint8
+	}{
 		{"#817801", 129, 120, 1, 255},
 		{"#62D5", 102, 34, 221, 85},
 		{"#857D", 136, 85, 119, 221},
@@ -260,17 +259,9 @@ func TestBrowserFirefox(t *testing.T) {
 		{"hwb(3.820rad 20.592% 40.485%)", 53, 87, 152, 255},
 		{"hwb(197.668deg 13.713% 9.565% / 0.582)", 35, 173, 231, 148},
 	}
-	for i, d := range data {
-		c, err := Parse(d.colorStr)
-		if err != nil {
-			t.Errorf("Parse error: %s", d.colorStr)
-			continue
-		}
-		r, g, b, a := c.RGBA255()
-		rgba := [4]uint8{r, g, b, a}
-		out := [4]uint8{d.r, d.g, d.b, d.a}
-		if rgba != out {
-			t.Errorf("(%d) %s -> %v != %v", i, d.colorStr, out, rgba)
-		}
+	for _, d := range data {
+		c, err := Parse(d.s)
+		test(t, err, nil)
+		test(t, arr8(c.RGBA255()), arr8(d.r, d.g, d.b, d.a))
 	}
 }
