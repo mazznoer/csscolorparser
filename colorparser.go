@@ -62,7 +62,10 @@ func (c Color) RGBString() string {
 
 // Name returns name of this color if its available.
 func (c Color) Name() (string, bool) {
-	r, g, b, _ := c.RGBA255()
+	r, g, b, a := c.RGBA255()
+	if a != 255 {
+		return "", false
+	}
 	rgb := [3]uint8{r, g, b}
 	for k, v := range namedColors {
 		if v == rgb {

@@ -72,4 +72,35 @@ func Test_NamedColors(t *testing.T) {
 		test(t, ok, false)
 		test(t, name, "")
 	}
+
+	// 8 digits hex code with fully opaque alpha component
+
+	data3 := [][2]string{
+		{"#f0f8ffff", "aliceblue"},
+		{"#ffe4c4ff", "bisque"},
+		{"#7fff00ff", "chartreuse"},
+		{"#ff7f50ff", "coral"},
+	}
+	for _, d := range data3 {
+		c, err := Parse(d[0])
+		test(t, err, nil)
+		name, ok := c.Name()
+		testTrue(t, ok)
+		test(t, name, d[1])
+	}
+
+	// RGB is the same as named colors, but is not fully opaque
+
+	data4 := []string{
+		"#f0f8ff3f",
+		"#ffe4c47f",
+		"#7fff00bf",
+	}
+	for _, s := range data4 {
+		c, err := Parse(s)
+		test(t, err, nil)
+		name, ok := c.Name()
+		test(t, ok, false)
+		test(t, name, "")
+	}
 }
