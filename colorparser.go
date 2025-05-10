@@ -33,6 +33,7 @@ func (c Color) RGBA255() (r, g, b, a uint8) {
 	return
 }
 
+// Clamp restricts R, G, B, A values to the range 0..1.
 func (c Color) Clamp() Color {
 	return Color{
 		R: math.Max(math.Min(c.R, 1), 0),
@@ -90,16 +91,40 @@ func (c Color) MarshalText() ([]byte, error) {
 	return []byte(c.HexString()), nil
 }
 
+// FromHsv creates a Color from HSV colors.
+//
+// Arguments:
+//
+//   - h: Hue angle [0..360]
+//   - s: Saturation [0..1]
+//   - v: Value [0..1]
+//   - a: Alpha [0..1]
 func FromHsv(h, s, v, a float64) Color {
 	r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
 	return Color{r, g, b, clamp0_1(a)}
 }
 
+// FromHsl creates a Color from HSL colors.
+//
+// Arguments:
+//
+//   - h: Hue angle [0..360]
+//   - s: Saturation [0..1]
+//   - l: Lightness [0..1]
+//   - a: Alpha [0..1]
 func FromHsl(h, s, l, a float64) Color {
 	r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
 	return Color{r, g, b, clamp0_1(a)}
 }
 
+// FromHwb creates a Color from HWB colors.
+//
+// Arguments:
+//
+//   - h: Hue angle [0..360]
+//   - w: Whiteness [0..1]
+//   - b: Blackness [0..1]
+//   - a: Alpha [0..1]
 func FromHwb(h, w, b, a float64) Color {
 	r, g, b := hwbToRgb(normalizeAngle(h), clamp0_1(w), clamp0_1(b))
 	return Color{r, g, b, clamp0_1(a)}
@@ -112,10 +137,26 @@ func fromLinear(x float64) float64 {
 	return 12.92 * x
 }
 
+// FromLinearRGB creates a Color from linear-light RGB colors.
+//
+// Arguments:
+//
+//   - r: Red value [0..1]
+//   - g: Green value [0..1]
+//   - b: Blue value [0..1]
+//   - a: Alpha value [0..1]
 func FromLinearRGB(r, g, b, a float64) Color {
 	return Color{fromLinear(r), fromLinear(g), fromLinear(b), clamp0_1(a)}
 }
 
+// FromOklab creates a Color from Oklab colors.
+//
+// Arguments:
+//
+//   - l: Perceived lightness
+//   - a: How green/red the color is
+//   - b: How blue/yellow the color is
+//   - alpha: Alpha [0..1]
 func FromOklab(l, a, b, alpha float64) Color {
 	l_ := math.Pow(l+0.3963377774*a+0.2158037573*b, 3)
 	m_ := math.Pow(l-0.1055613458*a-0.0638541728*b, 3)
@@ -128,6 +169,14 @@ func FromOklab(l, a, b, alpha float64) Color {
 	return FromLinearRGB(R, G, B, alpha)
 }
 
+// FromOklch creates a Color from OKLCh colors.
+//
+// Arguments:
+//
+//   - l: Perceived lightness
+//   - c: Chroma
+//   - h: Hue angle in radians
+//   - alpha: Alpha [0..1]
 func FromOklch(l, c, h, alpha float64) Color {
 	return FromOklab(l, c*math.Cos(h), c*math.Sin(h), alpha)
 }
