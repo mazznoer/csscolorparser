@@ -211,89 +211,76 @@ func Parse(s string) (Color, error) {
 
 	if (op != -1) && strings.HasSuffix(s, ")") {
 		fname := strings.TrimSpace(s[:op])
-		alpha := 1.0
-		okA := true
 		s = s[op+1 : len(s)-1]
 		s = strings.ReplaceAll(s, ",", " ")
 		s = strings.ReplaceAll(s, "/", " ")
 		params := strings.Fields(s)
 
-		if fname == "rgb" || fname == "rgba" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
+		if len(params) != 3 && len(params) != 4 {
+			return black, fmt.Errorf("Invalid format")
+		}
+
+		alpha := 1.0
+		if len(params) == 4 {
+			var ok bool
+			alpha, ok, _ = parsePercentOrFloat(params[3])
+			if !ok {
+				return black, fmt.Errorf("Invalid format")
 			}
+			alpha = clamp0_1(alpha)
+		}
+
+		if fname == "rgb" || fname == "rgba" {
 			r, okR, _ := parsePercentOr255(params[0])
 			g, okG, _ := parsePercentOr255(params[1])
 			b, okB, _ := parsePercentOr255(params[2])
-			if len(params) == 4 {
-				alpha, okA, _ = parsePercentOrFloat(params[3])
-			}
-			if okR && okG && okB && okA {
+
+			if okR && okG && okB {
 				return Color{
 					clamp0_1(r),
 					clamp0_1(g),
 					clamp0_1(b),
-					clamp0_1(alpha),
+					alpha,
 				}, nil
 			}
 			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 
 		} else if fname == "hsl" || fname == "hsla" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("%s() format needs 3 or 4 parameters, %s", fname, input)
-			}
 			h, okH := parseAngle(params[0])
 			s, okS, _ := parsePercentOrFloat(params[1])
 			l, okL, _ := parsePercentOrFloat(params[2])
-			if len(params) == 4 {
-				alpha, okA, _ = parsePercentOrFloat(params[3])
-			}
-			if okH && okS && okL && okA {
+
+			if okH && okS && okL {
 				return FromHsl(h, s, l, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
 
 		} else if fname == "hwb" || fname == "hwba" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("hwb() format needs 3 or 4 parameters, %s", input)
-			}
 			H, okH := parseAngle(params[0])
 			W, okW, _ := parsePercentOrFloat(params[1])
 			B, okB, _ := parsePercentOrFloat(params[2])
-			if len(params) == 4 {
-				alpha, okA, _ = parsePercentOrFloat(params[3])
-			}
-			if okH && okW && okB && okA {
+
+			if okH && okW && okB {
 				return FromHwb(H, W, B, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong hwb() components, %s", input)
 
 		} else if fname == "hsv" || fname == "hsva" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("hsv() format needs 3 or 4 parameters, %s", input)
-			}
 			h, okH := parseAngle(params[0])
 			s, okS, _ := parsePercentOrFloat(params[1])
 			v, okV, _ := parsePercentOrFloat(params[2])
-			if len(params) == 4 {
-				alpha, okA, _ = parsePercentOrFloat(params[3])
-			}
-			if okH && okS && okV && okA {
+
+			if okH && okS && okV {
 				return FromHsv(h, s, v, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong hsv() components, %s", input)
+
 		} else if fname == "oklab" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("oklab() format needs 3 or 4 parameters, %s", input)
-			}
 			l, okL, _ := parsePercentOrFloat(params[0])
 			a, okA, fmtA := parsePercentOrFloat(params[1])
 			b, okB, fmtB := parsePercentOrFloat(params[2])
-			okAlpha := true
-			if len(params) == 4 {
-				alpha, okAlpha, _ = parsePercentOrFloat(params[3])
-			}
-			if okL && okA && okB && okAlpha {
+
+			if okL && okA && okB {
 				if fmtA {
 					a = remap(a, -1.0, 1.0, -0.4, 0.4)
 				}
@@ -303,17 +290,13 @@ func Parse(s string) (Color, error) {
 				return FromOklab(math.Max(l, 0), a, b, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong oklab() components, %s", input)
+
 		} else if fname == "oklch" {
-			if len(params) != 3 && len(params) != 4 {
-				return black, fmt.Errorf("oklch() format needs 3 or 4 parameters, %s", input)
-			}
 			l, okL, _ := parsePercentOrFloat(params[0])
 			c, okC, fmtC := parsePercentOrFloat(params[1])
 			h, okH := parseAngle(params[2])
-			if len(params) == 4 {
-				alpha, okA, _ = parsePercentOrFloat(params[3])
-			}
-			if okL && okC && okH && okA {
+
+			if okL && okC && okH {
 				if fmtC {
 					c = c * 0.4
 				}
