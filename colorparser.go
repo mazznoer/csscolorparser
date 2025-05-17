@@ -212,9 +212,10 @@ func Parse(s string) (Color, error) {
 	if (op != -1) && strings.HasSuffix(s, ")") {
 		fname := strings.TrimSpace(s[:op])
 		s = s[op+1 : len(s)-1]
-		s = strings.ReplaceAll(s, ",", " ")
-		s = strings.ReplaceAll(s, "/", " ")
-		params := strings.Fields(s)
+		f := func(c rune) bool {
+			return c == ',' || c == '/' || c == ' '
+		}
+		params := strings.FieldsFunc(s, f)
 
 		if len(params) != 3 && len(params) != 4 {
 			return black, fmt.Errorf("Invalid format")
@@ -222,12 +223,11 @@ func Parse(s string) (Color, error) {
 
 		alpha := 1.0
 		if len(params) == 4 {
-			var ok bool
-			alpha, ok, _ = parsePercentOrFloat(params[3])
+			v, ok, _ := parsePercentOrFloat(params[3])
 			if !ok {
 				return black, fmt.Errorf("Invalid format")
 			}
-			alpha = clamp0_1(alpha)
+			alpha = clamp0_1(v)
 		}
 
 		if fname == "rgb" || fname == "rgba" {
