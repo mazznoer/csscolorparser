@@ -181,6 +181,57 @@ func FromOklch(l, c, h, alpha float64) Color {
 	return FromOklab(l, c*math.Cos(h), c*math.Sin(h), alpha)
 }
 
+func labToXyz(l, a, b float64) (x, y, z float64) {
+	const (
+		e  = 216.0 / 24389.0
+		k  = 24389.0 / 27.0
+		Xn = 0.95047
+		Yn = 1.00000
+		Zn = 1.08883
+	)
+
+	fy := (l + 16.0) / 116.0
+	fx := fy + (a / 500.0)
+	fz := fy - (b / 200.0)
+
+	if math.Pow(fy, 3) <= e {
+		y = (Yn * (fy*7.787 + 16.0/116.0))
+	} else {
+		y = (Yn * math.Pow(fy, 3))
+	}
+
+	if math.Pow(fx, 3) <= e {
+		x = (Xn * (fx*7.787 + 16.0/116.0))
+	} else {
+		x = (Xn * math.Pow(fx, 3))
+	}
+
+	if math.Pow(fz, 3) <= e {
+		z = (Zn * (fz*7.787 + 16.0/116.0))
+	} else {
+		z = (Zn * math.Pow(fz, 3))
+	}
+
+	return
+}
+
+func xyzToLinearRgb(x, y, z float64) (r, g, b float64) {
+	r = 3.2404537*x - 1.537177*y - 0.498531*z
+	g = -0.969266*x + 1.876010*y + 0.041556*z
+	b = 0.055643*x - 0.204025*y + 1.057225*z
+	return
+}
+
+func FromLab(l, a, b, alpha float64) Color {
+	x, y, z := labToXyz(l, a, b)
+	R, G, B := xyzToLinearRgb(x, y, z)
+	return FromLinearRGB(R, G, B, alpha)
+}
+
+func FromLch(l, c, h, alpha float64) Color {
+	return FromLab(l, c*math.Cos(h), c*math.Sin(h), alpha)
+}
+
 var black = Color{0, 0, 0, 1}
 
 // Parse parses CSS color string and returns, if successful, a Color.
@@ -303,6 +354,39 @@ func Parse(s string) (Color, error) {
 				return FromOklch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
 			}
 			return black, fmt.Errorf("Wrong oklch() components, %s", input)
+		} else if fname == "lab" {
+			l, okL, fmtL := parsePercentOrFloat(params[0])
+			a, okA, fmtA := parsePercentOrFloat(params[1])
+			b, okB, fmtB := parsePercentOrFloat(params[2])
+
+			if okL && okA && okB {
+				if fmtL {
+					l = l * 100
+				}
+				if fmtA {
+					a = remap(a, -1, 1, -125, 125)
+				}
+				if fmtB {
+					b = remap(b, -1, 1, -125, 125)
+				}
+				return FromLab(math.Max(l, 0), a, b, alpha), nil
+			}
+			return black, fmt.Errorf("Invalid lab()")
+		} else if fname == "lch" {
+			l, okL, fmtL := parsePercentOrFloat(params[0])
+			c, okC, fmtC := parsePercentOrFloat(params[1])
+			h, okH := parseAngle(params[2])
+
+			if okL && okC && okH {
+				if fmtL {
+					l = l * 100
+				}
+				if fmtC {
+					c = c * 150
+				}
+				return FromLch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
+			}
+			return black, fmt.Errorf("Invalid lch()")
 		}
 	}
 

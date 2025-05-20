@@ -110,6 +110,10 @@ func Test_ParseColor(t *testing.T) {
 		{"hsv(0 0% 50%)", [4]uint8{128, 128, 128, 255}},
 		{"hsv(0 0% 100%)", [4]uint8{255, 255, 255, 255}},
 		{"hsv(0 0% 19%)", [4]uint8{48, 48, 48, 255}},
+		//{"lab(0%,0,0)", [4]uint8{0, 0, 0, 255}},
+		//{"lab(100%,0,0)", [4]uint8{255, 255, 255, 255}},
+		//{"lch(0%,0,0)", [4]uint8{0, 0, 0, 255}},
+		//{"lch(100%,0,0)", [4]uint8{255, 255, 255, 255}},
 	}
 	for _, d := range data0 {
 		c, err := Parse(d.s)
@@ -144,6 +148,14 @@ func Test_ParseColor(t *testing.T) {
 		test(t, err2, nil)
 		test(t, c2.HexString(), s)
 	}
+
+	/*
+	a, err := Parse("#7654CD")
+	test(t, err, nil)
+	b, err := Parse("lab(44.36% 36.05 -58.99)")
+	test(t, err, nil)
+	testColor(t, a, b)
+	*/
 }
 
 func Test_MarshalUnmarshal(t *testing.T) {
