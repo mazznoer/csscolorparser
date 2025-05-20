@@ -150,11 +150,11 @@ func Test_ParseColor(t *testing.T) {
 	}
 
 	/*
-	a, err := Parse("#7654CD")
-	test(t, err, nil)
-	b, err := Parse("lab(44.36% 36.05 -58.99)")
-	test(t, err, nil)
-	testColor(t, a, b)
+		a, err := Parse("#7654CD")
+		test(t, err, nil)
+		b, err := Parse("lab(44.36% 36.05 -58.99)")
+		test(t, err, nil)
+		testColor(t, a, b)
 	*/
 }
 
