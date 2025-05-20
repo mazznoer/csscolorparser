@@ -17,38 +17,11 @@
 * `rgb()` and `rgba()`
 * `hsl()` and `hsla()`
 * `hwb()`
+* `lab()`
+* `lch()`
 * `oklab()`
 * `oklch()`
 * `hwba()`, `hsv()`, `hsva()` - not in CSS standard.
-
-Not yet supported: `lab()`, `lch()`.
-
-### Example Color Format
-
-```css
-transparent
-lime
-#0f0
-#0f0f
-#00ff00
-#00ff00ff
-rgb(0,255,0)
-rgb(0% 100% 0%)
-rgb(0 255 0 / 100%)
-rgba(0,255,0,1)
-hsl(120,100%,50%)
-hsl(120deg 100% 50%)
-hsl(-240 100% 50%)
-hsl(-240deg 100% 50%)
-hsl(0.3333turn 100% 50%)
-hsl(133.333grad 100% 50%)
-hsl(2.0944rad 100% 50%)
-hsla(120,100%,50%,100%)
-hwb(120 0% 0%)
-hwb(480deg 0% 0% / 100%)
-hsv(120,100%,100%)
-hsv(120deg 100% 100% / 100%)
-```
 
 ## Usage Examples
 
