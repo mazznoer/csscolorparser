@@ -65,7 +65,7 @@ func (c Color) RGBString() string {
 func (c Color) Name() (string, bool) {
 	r, g, b, _ := c.RGBA255()
 	rgb := [3]uint8{r, g, b}
-	for k, v := range namedColors {
+	for k, v := range NamedColors {
 		if v == rgb {
 			return k, true
 		}
@@ -244,7 +244,7 @@ func Parse(s string) (Color, error) {
 	}
 
 	// Predefined name / keyword
-	c, ok := namedColors[s]
+	c, ok := NamedColors[s]
 	if ok {
 		return Color{float64(c[0]) / 255, float64(c[1]) / 255, float64(c[2]) / 255, 1}, nil
 	}

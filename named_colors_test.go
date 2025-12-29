@@ -6,7 +6,7 @@ import (
 )
 
 func Test_NamedColors(t *testing.T) {
-	for name, rgb := range namedColors {
+	for name, rgb := range NamedColors {
 		c, err := Parse(name)
 		r, g, b, _ := c.RGBA255()
 		test(t, err, nil)
