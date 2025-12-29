@@ -56,12 +56,12 @@ func Test_Color(t *testing.T) {
 
 	c = Color{0, 0, 1, 1}
 	test(t, c.HexString(), "#0000ff")
-	test(t, c.RGBString(), "rgb(0,0,255)")
+	test(t, c.RGBString(), "rgb(0 0 255)")
 	testGoColor(t, c, color.NRGBA{0, 0, 255, 255})
 
 	c = Color{0, 0, 1, 0.5}
 	test(t, c.HexString(), "#0000ff80")
-	test(t, c.RGBString(), "rgba(0,0,255,0.5)")
+	test(t, c.RGBString(), "rgb(0 0 255 / 50%)")
 	//testGoColor(t, c, color.NRGBA{0,0,255,127})
 
 	testGoColor(t, Color{A: 1}, color.Gray{0})

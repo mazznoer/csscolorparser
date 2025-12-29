@@ -55,10 +55,11 @@ func (c Color) HexString() string {
 // RGBString returns CSS RGB string.
 func (c Color) RGBString() string {
 	r, g, b, _ := c.RGBA255()
-	if c.A < 1 {
-		return fmt.Sprintf("rgba(%d,%d,%d,%v)", r, g, b, c.A)
+	a := uint8(clamp0_1(c.A) * 100)
+	if a < 100 {
+		return fmt.Sprintf("rgb(%d %d %d / %d%%)", r, g, b, a)
 	}
-	return fmt.Sprintf("rgb(%d,%d,%d)", r, g, b)
+	return fmt.Sprintf("rgb(%d %d %d)", r, g, b)
 }
 
 // Name returns name of this color if its available.

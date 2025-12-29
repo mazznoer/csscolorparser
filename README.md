@@ -37,7 +37,7 @@ if err != nil {
 fmt.Printf("R:%.3f, G:%.3f, B:%.3f, A:%.3f", c.R, c.G, c.B, c.A) // R:1.000, G:0.843, B:0.000, A:1.000
 fmt.Println(c.RGBA255())   // 255 215 0 255
 fmt.Println(c.HexString()) // #ffd700
-fmt.Println(c.RGBString()) // rgb(255,215,0)
+fmt.Println(c.RGBString()) // rgb(255 215 0)
 ```
 
 ## Try It Online

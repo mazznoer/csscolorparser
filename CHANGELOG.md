@@ -1,10 +1,24 @@
 # Changelog
 
-## [Unreleased](https://github.com/mazznoer/csscolorparser/compare/v0.1.4...HEAD)
+## [Unreleased](https://github.com/mazznoer/csscolorparser/compare/v0.1.7...HEAD)
+
+## v0.1.7
 
 ### Added
 
-- `Clamp()`
+- Support parsing `lab()` and `lch()` color format.
+- Make `NamedColors` public.
+- `Color.RGBString()` returns modern CSS RGB format.
+
+## v0.1.6
+
+- Doc and code improvements.
+
+## v0.1.5
+
+### Added
+
+- `Color.Clamp()`
 
 ## v0.1.4
 
