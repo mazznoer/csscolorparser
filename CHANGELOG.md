@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased](https://github.com/mazznoer/csscolorparser/compare/v0.1.7...HEAD)
+## v0.1.8
+
+### Fixed
+
+- Lab color conversion.
 
 ## v0.1.7
 
