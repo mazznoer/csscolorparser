@@ -195,22 +195,27 @@ func labToXyz(l, a, b float64) (x, y, z float64) {
 	fx := fy + (a / 500.0)
 	fz := fy - (b / 200.0)
 
-	if math.Pow(fy, 3) <= e {
-		y = (Yn * (fy*7.787 + 16.0/116.0))
+	// Calculate Y
+	if l > 8.0 { // Standard check is usually on L rather than fy^3 for Y
+		y = Yn * math.Pow(fy, 3)
 	} else {
-		y = (Yn * math.Pow(fy, 3))
+		y = Yn * (l / k)
 	}
 
-	if math.Pow(fx, 3) <= e {
-		x = (Xn * (fx*7.787 + 16.0/116.0))
+	// Calculate X
+	fx3 := math.Pow(fx, 3)
+	if fx3 > e {
+		x = Xn * fx3
 	} else {
-		x = (Xn * math.Pow(fx, 3))
+		x = Xn * (116.0*fx - 16.0) / k
 	}
 
-	if math.Pow(fz, 3) <= e {
-		z = (Zn * (fz*7.787 + 16.0/116.0))
+	// Calculate Z
+	fz3 := math.Pow(fz, 3)
+	if fz3 > e {
+		z = Zn * fz3
 	} else {
-		z = (Zn * math.Pow(fz, 3))
+		z = Zn * (116.0*fz - 16.0) / k
 	}
 
 	return
@@ -220,6 +225,9 @@ func xyzToLinearRgb(x, y, z float64) (r, g, b float64) {
 	r = 3.2404537*x - 1.537177*y - 0.498531*z
 	g = -0.969266*x + 1.876010*y + 0.041556*z
 	b = 0.055643*x - 0.204025*y + 1.057225*z
+	r = math.Max(0, math.Min(1, r))
+	g = math.Max(0, math.Min(1, g))
+	b = math.Max(0, math.Min(1, b))
 	return
 }
 

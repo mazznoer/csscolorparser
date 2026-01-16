@@ -69,6 +69,12 @@ func Test_Color(t *testing.T) {
 	c = Color{1.2001, 0.999, -0.001, 0.001}.Clamp()
 	testColor(t, c, Color{1, 0.999, 0, 0.001})
 
+	c = FromLinearRGB(0, 0, 0, 1)
+	test(t, c.HexString(), "#000000")
+
+	c = FromLinearRGB(1, 1, 1, 1)
+	test(t, c.HexString(), "#ffffff")
+
 	c = FromHwb(0, 0, 0, 1)
 	test(t, c.HexString(), "#ff0000")
 
@@ -89,6 +95,18 @@ func Test_Color(t *testing.T) {
 
 	c = FromOklch(0.86644, 0.29483, 2.487, 1)
 	test(t, c.HexString(), "#00ff00")
+
+	c = FromLab(0, 0, 0, 1)
+	test(t, c.HexString(), "#000000")
+
+	c = FromLab(100, 0, 0, 1)
+	test(t, c.HexString(), "#ffffff")
+
+	c = FromLch(0, 0, 0, 1)
+	test(t, c.HexString(), "#000000")
+
+	c = FromLch(100, 0, 0, 1)
+	test(t, c.HexString(), "#ffffff")
 }
 
 func Test_ParseColor(t *testing.T) {
@@ -110,10 +128,10 @@ func Test_ParseColor(t *testing.T) {
 		{"hsv(0 0% 50%)", [4]uint8{128, 128, 128, 255}},
 		{"hsv(0 0% 100%)", [4]uint8{255, 255, 255, 255}},
 		{"hsv(0 0% 19%)", [4]uint8{48, 48, 48, 255}},
-		//{"lab(0%,0,0)", [4]uint8{0, 0, 0, 255}},
-		//{"lab(100%,0,0)", [4]uint8{255, 255, 255, 255}},
-		//{"lch(0%,0,0)", [4]uint8{0, 0, 0, 255}},
-		//{"lch(100%,0,0)", [4]uint8{255, 255, 255, 255}},
+		{"lab(0% 0 0)", [4]uint8{0, 0, 0, 255}},
+		{"lab(100%,0,0)", [4]uint8{255, 255, 255, 255}},
+		{"lch(0% 0 0)", [4]uint8{0, 0, 0, 255}},
+		{"lch(100%,0,0)", [4]uint8{255, 255, 255, 255}},
 	}
 	for _, d := range data0 {
 		c, err := Parse(d.s)
@@ -154,6 +172,7 @@ func Test_ParseColor(t *testing.T) {
 		test(t, err, nil)
 		b, err := Parse("lab(44.36% 36.05 -58.99)")
 		test(t, err, nil)
+		test(t, a.HexString(), b.HexString())
 		testColor(t, a, b)
 	*/
 }
