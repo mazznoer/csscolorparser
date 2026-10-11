@@ -19,6 +19,7 @@ var (
 	ErrInvalidLch      = errors.New("invalid lch")
 	ErrInvalidOklab    = errors.New("invalid oklab")
 	ErrInvalidOklch    = errors.New("invalid oklch")
+	ErrInvalidColor    = errors.New("invalid color")
 	ErrInvalidFunction = errors.New("invalid function")
 	ErrInvalidUnknown  = errors.New("invalid unknown")
 )
@@ -64,8 +65,22 @@ func Parse(s string) (Color, error) {
 		return black, ErrInvalidUnknown
 	}
 
+	fname := strings.TrimSpace(s[:op])
+
 	pp := newParamParser(s[op+1 : len(s)-1])
 	pp.space()
+
+	var color_func string
+
+	if fname == "color" {
+		v, ok := pp.value()
+		if ok {
+			color_func = v
+		} else {
+			return black, ErrInvalidColor
+		}
+		pp.space()
+	}
 
 	v0, ok0 := pp.value()
 	sp0 := pp.commaOrSpace()
@@ -100,8 +115,6 @@ func Parse(s string) (Color, error) {
 	} else {
 		return black, ErrInvalidFunction
 	}
-
-	fname := strings.TrimSpace(s[:op])
 
 	if fname == "rgb" || fname == "rgba" {
 		r, okR, pctR := parsePercentOrFloat(v0)
@@ -235,6 +248,33 @@ func Parse(s string) (Color, error) {
 		}
 
 		return black, ErrInvalidLch
+	}
+
+	if fname == "color" {
+		if color_func == "srgb" {
+			r, okR, _ := parsePercentOrFloat(v0)
+			g, okG, _ := parsePercentOrFloat(v1)
+			b, okB, _ := parsePercentOrFloat(v2)
+
+			if okR && okG && okB {
+				return Color{
+					clamp(r),
+					clamp(g),
+					clamp(b),
+					alpha,
+				}, nil
+			}
+		} else if color_func == "srgb-linear" {
+			r, okR, _ := parsePercentOrFloat(v0)
+			g, okG, _ := parsePercentOrFloat(v1)
+			b, okB, _ := parsePercentOrFloat(v2)
+
+			if okR && okG && okB {
+				return FromLinearRGB(clamp(r), clamp(g), clamp(b), alpha), nil
+			}
+		}
+
+		return black, ErrInvalidColor
 	}
 
 	return black, ErrInvalidFunction
