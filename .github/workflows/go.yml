@@ -31,8 +31,9 @@ jobs:
       run: go vet .
 
     - name: Test
-      run: go test -v -coverprofile coverage.out && go tool cover -html coverage.out -o coverage.html
-      run: go test ./integration_test
+      run: |
+        go test -v -coverprofile coverage.out && go tool cover -html coverage.out -o coverage.html
+        go test -v ./integration_test
 
     - name: Format
       if: matrix.os == 'ubuntu-latest'
