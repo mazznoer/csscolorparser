@@ -2,6 +2,7 @@
 package csscolorparser
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -55,7 +56,7 @@ func (c Color) HexString() string {
 // RGBString returns CSS RGB string.
 func (c Color) RGBString() string {
 	r, g, b, _ := c.RGBA255()
-	a := uint8(clamp0_1(c.A) * 100)
+	a := uint8(clamp(c.A) * 100)
 	if a < 100 {
 		return fmt.Sprintf("rgb(%d %d %d / %d%%)", r, g, b, a)
 	}
@@ -101,8 +102,8 @@ func (c Color) MarshalText() ([]byte, error) {
 //   - v: Value [0..1]
 //   - a: Alpha [0..1]
 func FromHsv(h, s, v, a float64) Color {
-	r, g, b := hsvToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(v))
-	return Color{r, g, b, clamp0_1(a)}
+	r, g, b := hsvToRgb(normalizeAngle(h), clamp(s), clamp(v))
+	return Color{r, g, b, clamp(a)}
 }
 
 // FromHsl creates a Color from HSL colors.
@@ -114,8 +115,8 @@ func FromHsv(h, s, v, a float64) Color {
 //   - l: Lightness [0..1]
 //   - a: Alpha [0..1]
 func FromHsl(h, s, l, a float64) Color {
-	r, g, b := hslToRgb(normalizeAngle(h), clamp0_1(s), clamp0_1(l))
-	return Color{r, g, b, clamp0_1(a)}
+	r, g, b := hslToRgb(normalizeAngle(h), clamp(s), clamp(l))
+	return Color{r, g, b, clamp(a)}
 }
 
 // FromHwb creates a Color from HWB colors.
@@ -127,8 +128,8 @@ func FromHsl(h, s, l, a float64) Color {
 //   - b: Blackness [0..1]
 //   - a: Alpha [0..1]
 func FromHwb(h, w, b, a float64) Color {
-	r, g, b := hwbToRgb(normalizeAngle(h), clamp0_1(w), clamp0_1(b))
-	return Color{r, g, b, clamp0_1(a)}
+	r, g, b := hwbToRgb(normalizeAngle(h), clamp(w), clamp(b))
+	return Color{r, g, b, clamp(a)}
 }
 
 func fromLinear(x float64) float64 {
@@ -147,7 +148,7 @@ func fromLinear(x float64) float64 {
 //   - b: Blue value [0..1]
 //   - a: Alpha value [0..1]
 func FromLinearRGB(r, g, b, a float64) Color {
-	return Color{fromLinear(r), fromLinear(g), fromLinear(b), clamp0_1(a)}
+	return Color{fromLinear(r), fromLinear(g), fromLinear(b), clamp(a)}
 }
 
 // FromOklab creates a Color from Oklab colors.
@@ -243,9 +244,22 @@ func FromLch(l, c, h, alpha float64) Color {
 
 var black = Color{0, 0, 0, 1}
 
+var (
+	ErrInvalidHex      = errors.New("invalid hex")
+	ErrInvalidRgb      = errors.New("invalid rgb")
+	ErrInvalidHsl      = errors.New("invalid hsl")
+	ErrInvalidHwb      = errors.New("invalid hwb")
+	ErrInvalidHsv      = errors.New("invalid hsv")
+	ErrInvalidLab      = errors.New("invalid lab")
+	ErrInvalidLch      = errors.New("invalid lch")
+	ErrInvalidOklab    = errors.New("invalid oklab")
+	ErrInvalidOklch    = errors.New("invalid oklch")
+	ErrInvalidFunction = errors.New("invalid function")
+	ErrInvalidUnknown  = errors.New("invalid unknown")
+)
+
 // Parse parses CSS color string and returns, if successful, a Color.
 func Parse(s string) (Color, error) {
-	input := s
 	s = strings.TrimSpace(strings.ToLower(s))
 
 	if s == "transparent" {
@@ -253,159 +267,212 @@ func Parse(s string) (Color, error) {
 	}
 
 	// Predefined name / keyword
+
 	c, ok := NamedColors[s]
 	if ok {
 		return Color{float64(c[0]) / 255, float64(c[1]) / 255, float64(c[2]) / 255, 1}, nil
 	}
 
 	// Hexadecimal
+
 	if strings.HasPrefix(s, "#") {
 		c, ok := parseHex(s[1:])
 		if ok {
 			return c, nil
 		}
-		return black, fmt.Errorf("Invalid hex color, %s", input)
+		return black, ErrInvalidHex
 	}
 
-	op := strings.Index(s, "(")
+	// Hexadecimal without prefix
 
-	if (op != -1) && strings.HasSuffix(s, ")") {
-		fname := strings.TrimSpace(s[:op])
-		s = s[op+1 : len(s)-1]
-		f := func(c rune) bool {
-			return c == ',' || c == '/' || c == ' '
-		}
-		params := strings.FieldsFunc(s, f)
-
-		if len(params) != 3 && len(params) != 4 {
-			return black, fmt.Errorf("Invalid format")
-		}
-
-		alpha := 1.0
-		if len(params) == 4 {
-			v, ok, _ := parsePercentOrFloat(params[3])
-			if !ok {
-				return black, fmt.Errorf("Invalid format")
-			}
-			alpha = clamp0_1(v)
-		}
-
-		if fname == "rgb" || fname == "rgba" {
-			r, okR, _ := parsePercentOr255(params[0])
-			g, okG, _ := parsePercentOr255(params[1])
-			b, okB, _ := parsePercentOr255(params[2])
-
-			if okR && okG && okB {
-				return Color{
-					clamp0_1(r),
-					clamp0_1(g),
-					clamp0_1(b),
-					alpha,
-				}, nil
-			}
-			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
-
-		} else if fname == "hsl" || fname == "hsla" {
-			h, okH := parseAngle(params[0])
-			s, okS, _ := parsePercentOrFloat(params[1])
-			l, okL, _ := parsePercentOrFloat(params[2])
-
-			if okH && okS && okL {
-				return FromHsl(h, s, l, alpha), nil
-			}
-			return black, fmt.Errorf("Wrong %s() components, %s", fname, input)
-
-		} else if fname == "hwb" || fname == "hwba" {
-			H, okH := parseAngle(params[0])
-			W, okW, _ := parsePercentOrFloat(params[1])
-			B, okB, _ := parsePercentOrFloat(params[2])
-
-			if okH && okW && okB {
-				return FromHwb(H, W, B, alpha), nil
-			}
-			return black, fmt.Errorf("Wrong hwb() components, %s", input)
-
-		} else if fname == "hsv" || fname == "hsva" {
-			h, okH := parseAngle(params[0])
-			s, okS, _ := parsePercentOrFloat(params[1])
-			v, okV, _ := parsePercentOrFloat(params[2])
-
-			if okH && okS && okV {
-				return FromHsv(h, s, v, alpha), nil
-			}
-			return black, fmt.Errorf("Wrong hsv() components, %s", input)
-
-		} else if fname == "oklab" {
-			l, okL, _ := parsePercentOrFloat(params[0])
-			a, okA, fmtA := parsePercentOrFloat(params[1])
-			b, okB, fmtB := parsePercentOrFloat(params[2])
-
-			if okL && okA && okB {
-				if fmtA {
-					a = remap(a, -1.0, 1.0, -0.4, 0.4)
-				}
-				if fmtB {
-					b = remap(b, -1.0, 1.0, -0.4, 0.4)
-				}
-				return FromOklab(math.Max(l, 0), a, b, alpha), nil
-			}
-			return black, fmt.Errorf("Wrong oklab() components, %s", input)
-
-		} else if fname == "oklch" {
-			l, okL, _ := parsePercentOrFloat(params[0])
-			c, okC, fmtC := parsePercentOrFloat(params[1])
-			h, okH := parseAngle(params[2])
-
-			if okL && okC && okH {
-				if fmtC {
-					c = c * 0.4
-				}
-				return FromOklch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
-			}
-			return black, fmt.Errorf("Wrong oklch() components, %s", input)
-		} else if fname == "lab" {
-			l, okL, fmtL := parsePercentOrFloat(params[0])
-			a, okA, fmtA := parsePercentOrFloat(params[1])
-			b, okB, fmtB := parsePercentOrFloat(params[2])
-
-			if okL && okA && okB {
-				if fmtL {
-					l = l * 100
-				}
-				if fmtA {
-					a = remap(a, -1, 1, -125, 125)
-				}
-				if fmtB {
-					b = remap(b, -1, 1, -125, 125)
-				}
-				return FromLab(math.Max(l, 0), a, b, alpha), nil
-			}
-			return black, fmt.Errorf("Invalid lab()")
-		} else if fname == "lch" {
-			l, okL, fmtL := parsePercentOrFloat(params[0])
-			c, okC, fmtC := parsePercentOrFloat(params[1])
-			h, okH := parseAngle(params[2])
-
-			if okL && okC && okH {
-				if fmtL {
-					l = l * 100
-				}
-				if fmtC {
-					c = c * 150
-				}
-				return FromLch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
-			}
-			return black, fmt.Errorf("Invalid lch()")
-		}
-	}
-
-	// RGB hexadecimal format without '#' prefix
 	c2, ok2 := parseHex(s)
 	if ok2 {
 		return c2, nil
 	}
 
-	return black, fmt.Errorf("Invalid color format, %s", input)
+	// Color functions
+
+	op := strings.Index(s, "(")
+	hasSuffix := strings.HasSuffix(s, ")")
+
+	if !(op != -1 && hasSuffix) {
+		return black, ErrInvalidUnknown
+	}
+
+	pp := newParamParser(s[op+1 : len(s)-1])
+	pp.space()
+
+	v0, ok0 := pp.value()
+	sp0 := pp.commaOrSpace()
+	v1, ok1 := pp.value()
+	sp1 := pp.commaOrSpace()
+	v2, ok2 := pp.value()
+
+	if !(ok0 && ok1 && ok2 && sp0 && sp1) {
+		return black, ErrInvalidFunction
+	}
+
+	sp2 := pp.space()
+	end := pp.isEnd()
+	sp3 := pp.commaOrSlash()
+
+	v3, ok3 := pp.value()
+
+	var alpha float64
+
+	if end {
+		alpha = 1.0
+	} else if (sp2 || sp3) && ok3 {
+		if !pp.isEnd() {
+			return black, ErrInvalidFunction
+		}
+
+		v, ok, _ := parsePercentOrFloat(v3)
+		if !ok {
+			return black, ErrInvalidFunction
+		}
+		alpha = clamp(v)
+	} else {
+		return black, ErrInvalidFunction
+	}
+
+	fname := strings.TrimSpace(s[:op])
+
+	if fname == "rgb" || fname == "rgba" {
+		r, okR, pctR := parsePercentOrFloat(v0)
+		g, okG, pctG := parsePercentOrFloat(v1)
+		b, okB, pctB := parsePercentOrFloat(v2)
+
+		if okR && okG && okB {
+			if !pctR {
+				r = r / 255
+			}
+			if !pctG {
+				g = g / 255
+			}
+			if !pctB {
+				b = b / 255
+			}
+			return Color{
+				clamp(r),
+				clamp(g),
+				clamp(b),
+				alpha,
+			}, nil
+		}
+
+		return black, ErrInvalidRgb
+	}
+
+	if fname == "hsl" || fname == "hsla" {
+		h, okH := parseAngle(v0)
+		s, okS, _ := parsePercentOrFloat(v1)
+		l, okL, _ := parsePercentOrFloat(v2)
+
+		if okH && okS && okL {
+			return FromHsl(h, s, l, alpha), nil
+		}
+
+		return black, ErrInvalidHsl
+	}
+
+	if fname == "hwb" || fname == "hwba" {
+		H, okH := parseAngle(v0)
+		W, okW, _ := parsePercentOrFloat(v1)
+		B, okB, _ := parsePercentOrFloat(v2)
+
+		if okH && okW && okB {
+			return FromHwb(H, W, B, alpha), nil
+		}
+
+		return black, ErrInvalidHwb
+	}
+
+	if fname == "hsv" || fname == "hsva" {
+		h, okH := parseAngle(v0)
+		s, okS, _ := parsePercentOrFloat(v1)
+		v, okV, _ := parsePercentOrFloat(v2)
+
+		if okH && okS && okV {
+			return FromHsv(h, s, v, alpha), nil
+		}
+
+		return black, ErrInvalidHsv
+	}
+
+	if fname == "oklab" {
+		l, okL, _ := parsePercentOrFloat(v0)
+		a, okA, fmtA := parsePercentOrFloat(v1)
+		b, okB, fmtB := parsePercentOrFloat(v2)
+
+		if okL && okA && okB {
+			if fmtA {
+				a = remap(a, -1.0, 1.0, -0.4, 0.4)
+			}
+			if fmtB {
+				b = remap(b, -1.0, 1.0, -0.4, 0.4)
+			}
+			return FromOklab(math.Max(l, 0), a, b, alpha), nil
+		}
+
+		return black, ErrInvalidOklab
+	}
+
+	if fname == "oklch" {
+		l, okL, _ := parsePercentOrFloat(v0)
+		c, okC, fmtC := parsePercentOrFloat(v1)
+		h, okH := parseAngle(v2)
+
+		if okL && okC && okH {
+			if fmtC {
+				c = c * 0.4
+			}
+			return FromOklch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
+		}
+
+		return black, ErrInvalidOklch
+	}
+
+	if fname == "lab" {
+		l, okL, fmtL := parsePercentOrFloat(v0)
+		a, okA, fmtA := parsePercentOrFloat(v1)
+		b, okB, fmtB := parsePercentOrFloat(v2)
+
+		if okL && okA && okB {
+			if fmtL {
+				l = l * 100
+			}
+			if fmtA {
+				a = remap(a, -1, 1, -125, 125)
+			}
+			if fmtB {
+				b = remap(b, -1, 1, -125, 125)
+			}
+			return FromLab(math.Max(l, 0), a, b, alpha), nil
+		}
+
+		return black, ErrInvalidLab
+	}
+
+	if fname == "lch" {
+		l, okL, fmtL := parsePercentOrFloat(v0)
+		c, okC, fmtC := parsePercentOrFloat(v1)
+		h, okH := parseAngle(v2)
+
+		if okL && okC && okH {
+			if fmtL {
+				l = l * 100
+			}
+			if fmtC {
+				c = c * 150
+			}
+			return FromLch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
+		}
+
+		return black, ErrInvalidLch
+	}
+
+	return black, ErrInvalidFunction
 }
 
 // https://stackoverflow.com/questions/54197913/parse-hex-string-to-image-color
@@ -479,9 +546,9 @@ func hslToRgb(h, s, l float64) (r, g, b float64) {
 	}
 	n1 := 2*l - n2
 	h /= 60
-	r = clamp0_1(hueToRgb(n1, n2, h+2))
-	g = clamp0_1(hueToRgb(n1, n2, h))
-	b = clamp0_1(hueToRgb(n1, n2, h-2))
+	r = clamp(hueToRgb(n1, n2, h+2))
+	g = clamp(hueToRgb(n1, n2, h))
+	b = clamp(hueToRgb(n1, n2, h-2))
 	return
 }
 
@@ -518,7 +585,7 @@ func hsvToRgb(H, S, V float64) (r, g, b float64) {
 	return hslToRgb(h, s, l)
 }
 
-func clamp0_1(t float64) float64 {
+func clamp(t float64) float64 {
 	if t < 0 {
 		return 0
 	}
@@ -544,22 +611,6 @@ func parsePercentOrFloat(s string) (float64, bool, bool) {
 	}
 	f, ok := parseFloat(s)
 	return f, ok, false
-}
-
-// Returns (result, ok?, percentage?)
-func parsePercentOr255(s string) (float64, bool, bool) {
-	if strings.HasSuffix(s, "%") {
-		f, ok := parseFloat(s[:len(s)-1])
-		if ok {
-			return f / 100, true, true
-		}
-		return 0, false, true
-	}
-	f, ok := parseFloat(s)
-	if ok {
-		return f / 255, true, false
-	}
-	return 0, false, false
 }
 
 // Result angle in degrees (not normalized)
