@@ -187,6 +187,18 @@ func FromLch(l, c, h, alpha float64) Color {
 	return FromLab(l, c*math.Cos(h), c*math.Sin(h), alpha)
 }
 
+func (c Color) Hsl() [4]float64 {
+	c = c.Clamp()
+	h, s, l := rgbToHsl(c.R, c.G, c.B)
+	return [4]float64{h, s, l, c.A}
+}
+
+func (c Color) Hwb() [4]float64 {
+	c = c.Clamp()
+	h, w, b := rgbToHwb(c.R, c.G, c.B)
+	return [4]float64{h, w, b, c.A}
+}
+
 // Utils
 
 func hueToRgb(n1, n2, h float64) float64 {
@@ -304,4 +316,61 @@ func xyzToLinearRgb(x, y, z float64) (r, g, b float64) {
 	g = math.Max(0, math.Min(1, g))
 	b = math.Max(0, math.Min(1, b))
 	return
+}
+
+// ---
+
+// hue returns the hue in degrees [0, 360) for sRGB values in [0, 1],
+// given the precomputed max and min channel values.
+// Achromatic colors (max == min) return 0.
+func hue(r, g, b, max, min float64) float64 {
+	delta := max - min
+	if delta == 0 {
+		return 0
+	}
+
+	var h float64
+	switch max {
+	case r:
+		h = math.Mod((g-b)/delta, 6)
+	case g:
+		h = (b-r)/delta + 2
+	default:
+		h = (r-g)/delta + 4
+	}
+
+	h *= 60
+	if h < 0 {
+		h += 360
+	}
+	return h
+}
+
+// rgbToHsl converts sRGB (r, g, b in [0, 1]) to HSL.
+// h is in degrees [0, 360); s and l are in [0, 1].
+func rgbToHsl(r, g, b float64) (h, s, l float64) {
+	max := math.Max(r, math.Max(g, b))
+	min := math.Min(r, math.Min(g, b))
+	delta := max - min
+
+	l = (max + min) / 2
+	if delta == 0 {
+		return 0, 0, l
+	}
+
+	s = delta / (1 - math.Abs(2*l-1))
+	h = hue(r, g, b, max, min)
+	return h, s, l
+}
+
+// rgbToHwb converts sRGB (r, g, b in [0, 1]) to HWB.
+// h is in degrees [0, 360); w (whiteness) and bl (blackness) are in [0, 1].
+func rgbToHwb(r, g, b float64) (h, w, bl float64) {
+	max := math.Max(r, math.Max(g, b))
+	min := math.Min(r, math.Min(g, b))
+
+	h = hue(r, g, b, max, min)
+	w = min
+	bl = 1 - max
+	return h, w, bl
 }

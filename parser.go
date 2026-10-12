@@ -28,6 +28,7 @@ const maxRecDepth = 32
 
 // Parse parses CSS color string and returns, if successful, a Color.
 func Parse(s string) (Color, error) {
+	s = strings.TrimSpace(strings.ToLower(s))
 	return parseAll(s, 0)
 }
 
@@ -35,8 +36,6 @@ func parseAll(s string, depth int) (Color, error) {
 	if depth > maxRecDepth {
 		return black, ErrInvalidUnknown
 	}
-
-	s = strings.TrimSpace(strings.ToLower(s))
 
 	// Parse absolute format
 
@@ -47,14 +46,15 @@ func parseAll(s string, depth int) (Color, error) {
 
 	// Parse relative format
 
+	switch err {
+	case ErrInvalidHex, ErrInvalidFunction, ErrInvalidUnknown:
+		return black, err
+	}
+
 	op := strings.Index(s, "(")
 	hasSuffix := strings.HasSuffix(s, ")")
 
 	if !(op != -1 && hasSuffix) {
-		return black, ErrInvalidUnknown
-	}
-
-	if !(err == ErrInvalidRgb || err == ErrInvalidColor) {
 		return black, err
 	}
 
@@ -143,6 +143,53 @@ func parseAll(s string, depth int) (Color, error) {
 			}
 			return Color{r, g, b, a}, nil
 		}
+
+	} else if err == ErrInvalidHsl {
+		hsl := col.Hsl()
+		variables := [4]variable{
+			{"h", hsl[0]},
+			{"s", hsl[1] * 100},
+			{"l", hsl[2] * 100},
+			{"alpha", col.A},
+		}
+		h, okH, pctH := parseComponent(v0, variables)
+		s, okS, pctS := parseComponent(v1, variables)
+		l, okL, pctL := parseComponent(v2, variables)
+		a, okA, _ := parseComponent(alpha, variables)
+
+		if okH && okS && okL && okA && !pctH {
+			if !pctS {
+				s = s / 100
+			}
+			if !pctL {
+				l = l / 100
+			}
+			return FromHsl(h, clamp(s), clamp(l), a), nil
+		}
+
+	} else if err == ErrInvalidHwb {
+		hwb := col.Hwb()
+		variables := [4]variable{
+			{"h", hwb[0]},
+			{"w", hwb[1] * 100},
+			{"b", hwb[2] * 100},
+			{"alpha", col.A},
+		}
+		h, okH, pctH := parseComponent(v0, variables)
+		w, okW, pctW := parseComponent(v1, variables)
+		b, okB, pctB := parseComponent(v2, variables)
+		a, okA, _ := parseComponent(alpha, variables)
+
+		if okH && okW && okB && okA && !pctH {
+			if !pctW {
+				w = w / 100
+			}
+			if !pctB {
+				b = b / 100
+			}
+			return FromHwb(h, w, b, a), nil
+		}
+
 	} else if err == ErrInvalidColor {
 		if color_func == "srgb" {
 			variables := [4]variable{

@@ -59,3 +59,62 @@ func TestHwbAbsolute(t *testing.T) {
 		test(t, hex, c.HexString())
 	}
 }
+
+func TestHwbRelative(t *testing.T) {
+	testData := [][2]string{
+		// none
+		{"#ff0000", "hwb(from #bad455 none none none)"},
+		{"#bad45500", "hwb(from #bad455 h w b / none)"},
+
+		// bare number
+		{"#ff6161", "hwb(from #fff 0 38 0)"},
+		{"#ff873d", "hwb(from #fff 23 24 0)"},
+		{"#ffedab", "hwb(from #fff 47 67 0)"},
+		{"#5e7300", "hwb(from #fff 71 0 55)"},
+		{"#aaff6e", "hwb(from #fff 95 43 0)"},
+		{"#013d00", "hwb(from #fff 119 0 76)"},
+		{"#00b344", "hwb(from #fff 143 0 30)"},
+		{"#94ffe8", "hwb(from #fff 167 58 0)"},
+		{"#004f61", "hwb(from #fff 191 0 62)"},
+		{"#cce1ff", "hwb(from #fff 215 80 0)"},
+		{"#6b6eff", "hwb(from #fff 239 42 0)"},
+		{"#e9dbff", "hwb(from #fff 263 86 0)"},
+		{"#70008f", "hwb(from #fff 287 0 44)"},
+		{"#ff85e9", "hwb(from #fff 311 52 0)"},
+		//{"#e0005d", "hwb(from #fff 335 0 12)"},
+
+		// percentage
+		{"#ffa1a1", "hwb(from #fff 0 63% 0%)"},
+		{"#c74c00", "hwb(from #fff 23 0% 22%)"},
+		{"#4d3c00", "hwb(from #fff 47 0% 70%)"},
+		{"#98ba00", "hwb(from #fff 71 0% 27%)"},
+		{"#1c4200", "hwb(from #fff 95 0% 74%)"},
+		{"#9bff99", "hwb(from #fff 119 60% 0%)"},
+		{"#d1ffe3", "hwb(from #fff 143 82% 0%)"},
+		{"#005744", "hwb(from #fff 167 0% 66%)"},
+		{"#00b1d9", "hwb(from #fff 191 0% 15%)"},
+		{"#87b9ff", "hwb(from #fff 215 53% 0%)"},
+		{"#00014f", "hwb(from #fff 239 0% 69%)"},
+		{"#4100a8", "hwb(from #fff 263 0% 34%)"},
+		{"#f3c9ff", "hwb(from #fff 287 79% 0%)"},
+		{"#ff24d7", "hwb(from #fff 311 14% 0%)"},
+		{"#820036", "hwb(from #fff 335 0% 49%)"},
+
+		// keywords
+		{"#bad455", "hwb(from #bad455 h w b)"},
+		{"#bad455", "hwb(from #bad455 h w b / alpha)"},
+
+		// calc(...)
+		{"#bad455", "hwb(from #bad455 calc(h) calc(w) calc(b))"},
+		{"#0d94b3", "hwb(from #bad455 calc(7 * 13 + 100) calc(100 - 95) calc(90 / 3))"},
+		{"#ae9d46", "hwb(from #bad455 calc(h * 0.7) calc(w - 6) calc(b + 15))"},
+		{"#f2c63b", "hwb(from #bad455 calc((h + w + b) * 0.37) calc(w - 10) 5)"},
+	}
+
+	for _, pair := range testData {
+		hex, s := pair[0], pair[1]
+		c, err := csscolorparser.Parse(s)
+		test(t, err, nil)
+		test(t, hex, c.HexString())
+	}
+}
