@@ -16,16 +16,6 @@ func newParamParser(s string) *paramParser {
 	return &paramParser{s: s}
 }
 
-// isSpace reports whether c is ASCII whitespace
-// (space, tab, line feed, form feed, carriage return).
-func isSpace(c byte) bool {
-	switch c {
-	case ' ', '\t', '\n', '\f', '\r':
-		return true
-	}
-	return false
-}
-
 // value consumes and returns the substring from the current position up to
 // (not including) the next space, comma, or slash. Those characters are
 // ignored while inside parentheses, which may be nested.

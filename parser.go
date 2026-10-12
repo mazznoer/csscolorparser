@@ -24,18 +24,155 @@ var (
 	ErrInvalidUnknown  = errors.New("invalid unknown")
 )
 
+const maxRecDepth = 32
+
 // Parse parses CSS color string and returns, if successful, a Color.
 func Parse(s string) (Color, error) {
+	return parseAll(s, 0)
+}
+
+func parseAll(s string, depth int) (Color, error) {
+	if depth > maxRecDepth {
+		return black, ErrInvalidUnknown
+	}
+
 	s = strings.TrimSpace(strings.ToLower(s))
 
+	// Parse absolute format
+
+	c, err := parseAbs(s)
+	if err == nil {
+		return c, nil
+	}
+
+	// Parse relative format
+
+	op := strings.Index(s, "(")
+	hasSuffix := strings.HasSuffix(s, ")")
+
+	if !(op != -1 && hasSuffix) {
+		return black, ErrInvalidUnknown
+	}
+
+	if !(err == ErrInvalidRgb || err == ErrInvalidColor) {
+		return black, err
+	}
+
+	pp := newParamParser(s[op+1 : len(s)-1])
+	pp.space()
+
+	from, ok0 := pp.value()
+	sp0 := pp.space()
+	scol, ok1 := pp.value()
+	sp1 := pp.space()
+
+	if !(ok0 && ok1 && sp0 && sp1) {
+		return black, err
+	}
+
+	if from != "from" {
+		return black, err
+	}
+
+	col, errCol := parseAll(scol, depth+1)
+	if errCol != nil {
+		return black, err
+	}
+
+	var color_func string
+
+	if err == ErrInvalidColor {
+		v, ok := pp.value()
+		if ok {
+			color_func = v
+		} else {
+			return black, err
+		}
+		pp.space()
+	}
+
+	v0, okA := pp.value()
+	spA := pp.space()
+	v1, okB := pp.value()
+	spB := pp.space()
+	v2, okC := pp.value()
+
+	if !(okA && okB && okC && spA && spB) {
+		return black, err
+	}
+
+	pp.space()
+
+	end := pp.isEnd()
+	slash := pp.slash()
+
+	v3, okD := pp.value()
+	pp.space()
+
+	var alpha string
+
+	if end {
+		alpha = "alpha"
+	} else if slash && okD && pp.isEnd() {
+		alpha = v3
+	} else {
+		return black, err
+	}
+
+	if err == ErrInvalidRgb {
+		variables := [4]variable{
+			{"r", col.R * 255},
+			{"g", col.G * 255},
+			{"b", col.B * 255},
+			{"alpha", col.A},
+		}
+		r, okR, pctR := parseComponent(v0, variables)
+		g, okG, pctG := parseComponent(v1, variables)
+		b, okB, pctB := parseComponent(v2, variables)
+		a, okA, _ := parseComponent(alpha, variables)
+
+		if okR && okG && okB && okA {
+			if !pctR {
+				r = r / 255
+			}
+			if !pctG {
+				g = g / 255
+			}
+			if !pctB {
+				b = b / 255
+			}
+			return Color{r, g, b, a}, nil
+		}
+	} else if err == ErrInvalidColor {
+		if color_func == "srgb" {
+			variables := [4]variable{
+				{"r", col.R},
+				{"g", col.G},
+				{"b", col.B},
+				{"alpha", col.A},
+			}
+			r, okR, _ := parseComponent(v0, variables)
+			g, okG, _ := parseComponent(v1, variables)
+			b, okB, _ := parseComponent(v2, variables)
+			a, okA, _ := parseComponent(alpha, variables)
+
+			if okR && okG && okB && okA {
+				return Color{r, g, b, a}, nil
+			}
+		}
+	}
+
+	return black, err
+}
+
+func parseAbs(s string) (Color, error) {
 	if s == "transparent" {
 		return Color{0, 0, 0, 0}, nil
 	}
 
 	// Predefined name / keyword
 
-	c, ok := NamedColors[s]
-	if ok {
+	if c, ok := NamedColors[s]; ok {
 		return Color{float64(c[0]) / 255, float64(c[1]) / 255, float64(c[2]) / 255, 1}, nil
 	}
 
@@ -51,9 +188,8 @@ func Parse(s string) (Color, error) {
 
 	// Hexadecimal without prefix
 
-	c2, ok2 := parseHex(s)
-	if ok2 {
-		return c2, nil
+	if c, ok := parseHex(s); ok {
+		return c, nil
 	}
 
 	// Color functions
@@ -67,6 +203,29 @@ func Parse(s string) (Color, error) {
 
 	fname := strings.TrimSpace(s[:op])
 
+	var err error
+	if fname == "rgb" || fname == "rgba" {
+		err = ErrInvalidRgb
+	} else if fname == "hsl" || fname == "hsla" {
+		err = ErrInvalidHsl
+	} else if fname == "hwb" || fname == "hwba" {
+		err = ErrInvalidHwb
+	} else if fname == "hsv" {
+		err = ErrInvalidHsv
+	} else if fname == "lab" {
+		err = ErrInvalidLab
+	} else if fname == "lch" {
+		err = ErrInvalidLch
+	} else if fname == "oklab" {
+		err = ErrInvalidOklab
+	} else if fname == "oklch" {
+		err = ErrInvalidOklch
+	} else if fname == "color" {
+		err = ErrInvalidColor
+	} else {
+		return black, ErrInvalidFunction
+	}
+
 	pp := newParamParser(s[op+1 : len(s)-1])
 	pp.space()
 
@@ -77,7 +236,7 @@ func Parse(s string) (Color, error) {
 		if ok {
 			color_func = v
 		} else {
-			return black, ErrInvalidColor
+			return black, err
 		}
 		pp.space()
 	}
@@ -89,7 +248,7 @@ func Parse(s string) (Color, error) {
 	v2, ok2 := pp.value()
 
 	if !(ok0 && ok1 && ok2 && sp0 && sp1) {
-		return black, ErrInvalidFunction
+		return black, err
 	}
 
 	sp2 := pp.space()
@@ -104,19 +263,19 @@ func Parse(s string) (Color, error) {
 		alpha = 1.0
 	} else if (sp2 || sp3) && ok3 {
 		if !pp.isEnd() {
-			return black, ErrInvalidFunction
+			return black, err
 		}
 
 		v, ok, _ := parsePercentOrFloat(v3)
 		if !ok {
-			return black, ErrInvalidFunction
+			return black, err
 		}
 		alpha = clamp(v)
 	} else {
-		return black, ErrInvalidFunction
+		return black, err
 	}
 
-	if fname == "rgb" || fname == "rgba" {
+	if err == ErrInvalidRgb {
 		r, okR, pctR := parsePercentOrFloat(v0)
 		g, okG, pctG := parsePercentOrFloat(v1)
 		b, okB, pctB := parsePercentOrFloat(v2)
@@ -139,34 +298,37 @@ func Parse(s string) (Color, error) {
 			}, nil
 		}
 
-		return black, ErrInvalidRgb
-	}
-
-	if fname == "hsl" || fname == "hsla" {
+	} else if err == ErrInvalidHsl {
 		h, okH := parseAngle(v0)
-		s, okS, _ := parsePercentOrFloat(v1)
-		l, okL, _ := parsePercentOrFloat(v2)
+		s, okS, pctS := parsePercentOrFloat(v1)
+		l, okL, pctL := parsePercentOrFloat(v2)
 
 		if okH && okS && okL {
+			if !pctS {
+				s = s / 100
+			}
+			if !pctL {
+				l = l / 100
+			}
 			return FromHsl(h, s, l, alpha), nil
 		}
 
-		return black, ErrInvalidHsl
-	}
-
-	if fname == "hwb" || fname == "hwba" {
-		H, okH := parseAngle(v0)
-		W, okW, _ := parsePercentOrFloat(v1)
-		B, okB, _ := parsePercentOrFloat(v2)
+	} else if err == ErrInvalidHwb {
+		h, okH := parseAngle(v0)
+		w, okW, pctW := parsePercentOrFloat(v1)
+		b, okB, pctB := parsePercentOrFloat(v2)
 
 		if okH && okW && okB {
-			return FromHwb(H, W, B, alpha), nil
+			if !pctW {
+				w = w / 100
+			}
+			if !pctB {
+				b = b / 100
+			}
+			return FromHwb(h, w, b, alpha), nil
 		}
 
-		return black, ErrInvalidHwb
-	}
-
-	if fname == "hsv" || fname == "hsva" {
+	} else if err == ErrInvalidHsv {
 		h, okH := parseAngle(v0)
 		s, okS, _ := parsePercentOrFloat(v1)
 		v, okV, _ := parsePercentOrFloat(v2)
@@ -175,10 +337,7 @@ func Parse(s string) (Color, error) {
 			return FromHsv(h, s, v, alpha), nil
 		}
 
-		return black, ErrInvalidHsv
-	}
-
-	if fname == "oklab" {
+	} else if err == ErrInvalidOklab {
 		l, okL, _ := parsePercentOrFloat(v0)
 		a, okA, fmtA := parsePercentOrFloat(v1)
 		b, okB, fmtB := parsePercentOrFloat(v2)
@@ -193,10 +352,7 @@ func Parse(s string) (Color, error) {
 			return FromOklab(math.Max(l, 0), a, b, alpha), nil
 		}
 
-		return black, ErrInvalidOklab
-	}
-
-	if fname == "oklch" {
+	} else if err == ErrInvalidOklch {
 		l, okL, _ := parsePercentOrFloat(v0)
 		c, okC, fmtC := parsePercentOrFloat(v1)
 		h, okH := parseAngle(v2)
@@ -208,10 +364,7 @@ func Parse(s string) (Color, error) {
 			return FromOklch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
 		}
 
-		return black, ErrInvalidOklch
-	}
-
-	if fname == "lab" {
+	} else if err == ErrInvalidLab {
 		l, okL, fmtL := parsePercentOrFloat(v0)
 		a, okA, fmtA := parsePercentOrFloat(v1)
 		b, okB, fmtB := parsePercentOrFloat(v2)
@@ -229,10 +382,7 @@ func Parse(s string) (Color, error) {
 			return FromLab(math.Max(l, 0), a, b, alpha), nil
 		}
 
-		return black, ErrInvalidLab
-	}
-
-	if fname == "lch" {
+	} else if err == ErrInvalidLch {
 		l, okL, fmtL := parsePercentOrFloat(v0)
 		c, okC, fmtC := parsePercentOrFloat(v1)
 		h, okH := parseAngle(v2)
@@ -247,10 +397,7 @@ func Parse(s string) (Color, error) {
 			return FromLch(math.Max(l, 0), math.Max(c, 0), h*math.Pi/180, alpha), nil
 		}
 
-		return black, ErrInvalidLch
-	}
-
-	if fname == "color" {
+	} else if err == ErrInvalidColor {
 		if color_func == "srgb" {
 			r, okR, _ := parsePercentOrFloat(v0)
 			g, okG, _ := parsePercentOrFloat(v1)
@@ -274,10 +421,9 @@ func Parse(s string) (Color, error) {
 			}
 		}
 
-		return black, ErrInvalidColor
 	}
 
-	return black, ErrInvalidFunction
+	return black, err
 }
 
 // https://stackoverflow.com/questions/54197913/parse-hex-string-to-image-color
