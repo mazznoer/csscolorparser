@@ -27,6 +27,9 @@ func parseFloat(s string) (float64, bool) {
 
 // Returns (result, ok?, percentage?)
 func parsePercentOrFloat(s string) (float64, bool, bool) {
+	if s == "none" {
+		return 0, true, false
+	}
 	if strings.HasSuffix(s, "%") {
 		f, ok := parseFloat(s[:len(s)-1])
 		if ok {
@@ -40,6 +43,9 @@ func parsePercentOrFloat(s string) (float64, bool, bool) {
 
 // Result angle in degrees (not normalized)
 func parseAngle(s string) (float64, bool) {
+	if s == "none" {
+		return 0, true
+	}
 	if strings.HasSuffix(s, "deg") {
 		return parseFloat(s[:len(s)-3])
 	}
