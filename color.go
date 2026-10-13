@@ -12,19 +12,20 @@ type Color struct {
 
 // Implement the Go color.Color interface.
 func (c Color) RGBA() (r, g, b, a uint32) {
-	r = uint32(c.R*c.A*65535 + 0.5)
-	g = uint32(c.G*c.A*65535 + 0.5)
-	b = uint32(c.B*c.A*65535 + 0.5)
-	a = uint32(c.A*65535 + 0.5)
+	A := clamp(c.A)
+	r = uint32(clamp(c.R)*A*65535 + 0.5)
+	g = uint32(clamp(c.G)*A*65535 + 0.5)
+	b = uint32(clamp(c.B)*A*65535 + 0.5)
+	a = uint32(A*65535 + 0.5)
 	return
 }
 
 // RGBA255 returns R, G, B, A values in the range 0..255
 func (c Color) RGBA255() (r, g, b, a uint8) {
-	r = uint8(c.R*255 + 0.5)
-	g = uint8(c.G*255 + 0.5)
-	b = uint8(c.B*255 + 0.5)
-	a = uint8(c.A*255 + 0.5)
+	r = uint8(clamp(c.R)*255 + 0.5)
+	g = uint8(clamp(c.G)*255 + 0.5)
+	b = uint8(clamp(c.B)*255 + 0.5)
+	a = uint8(clamp(c.A)*255 + 0.5)
 	return
 }
 
