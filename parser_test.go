@@ -167,14 +167,12 @@ func Test_ParseColor(t *testing.T) {
 		test(t, c2.HexString(), s)
 	}
 
-	/*
-		a, err := Parse("#7654CD")
-		test(t, err, nil)
-		b, err := Parse("lab(44.36% 36.05 -58.99)")
-		test(t, err, nil)
-		test(t, a.HexString(), b.HexString())
-		testColor(t, a, b)
-	*/
+	a, err := Parse("#7654CD")
+	test(t, err, nil)
+	b, err := Parse("lab(44.36% 36.05 -58.99)")
+	test(t, err, nil)
+	test(t, a.HexString(), b.HexString())
+	testColor(t, a, b)
 }
 
 func Test_MarshalUnmarshal(t *testing.T) {
