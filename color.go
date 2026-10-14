@@ -202,6 +202,40 @@ func (c Color) Hwb() [4]float64 {
 	return [4]float64{h, w, b, c.A}
 }
 
+func (c Color) LinearRgb() [4]float64 {
+	toLinear := func(x float64) float64 {
+		if x >= 0.04045 {
+			return math.Pow((x+0.055)/1.055, 2.4)
+		}
+		return x / 12.92
+	}
+	return [4]float64{
+		toLinear(c.R),
+		toLinear(c.G),
+		toLinear(c.B),
+		c.A,
+	}
+}
+
+func (c Color) Lab() [4]float64 {
+	rgb := c.LinearRgb()
+	l, a, b := linearRGBToLab(rgb[0], rgb[1], rgb[2])
+	return [4]float64{l, a, b, c.A}
+}
+
+func (col Color) Lch() [4]float64 {
+	lab := col.Lab()
+	l := lab[0]
+	a := lab[1]
+	b := lab[2]
+	c := math.Hypot(a, b)
+	h := math.Atan2(b, a)
+	if h < 0 {
+		h += math.Pi * 2
+	}
+	return [4]float64{l, c, h, col.A}
+}
+
 // Utils
 
 func hueToRgb(n1, n2, h float64) float64 {

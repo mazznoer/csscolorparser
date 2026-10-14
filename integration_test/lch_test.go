@@ -76,3 +76,61 @@ func TestLchAbsolute(t *testing.T) {
 		test(t, hex, c.HexString())
 	}
 }
+
+func TestLchRelative(t *testing.T) {
+	testData := [][2]string{
+		// none
+		{"#000000", "lch(from #bad455 none none none)"},
+		{"#bad45500", "lch(from #bad455 l c h / none)"},
+
+		// bare number
+		{"#d98ca4", "lch(from #fff 66.84 32.87 0)"},
+		{"#ff002b", "lch(from #fff 52.63 134.14 25.64)"},
+		{"#ff730a", "lch(from #fff 70.52 100.02 51.29)"},
+		{"#a85200", "lch(from #fff 44.88 137.89 76.93)"},
+		{"#d3e900", "lch(from #fff 88.21 116.97 102.57)"},
+		{"#c3eda7", "lch(from #fff 89.39 37.24 128.21)"},
+		//{"#00b757", "lch(from #fff 63.81 79 153.86)"},
+		{"#00ffe4", "lch(from #fff 91.84 65.52 179.5)"},
+		{"#00738e", "lch(from #fff 38.69 75.73 205.14)"},
+		{"#00b1ff", "lch(from #fff 57.34 138.64 230.79)"},
+		{"#d6e2f0", "lch(from #fff 89.33 8.64 256.43)"},
+		{"#282a36", "lch(from #fff 17.28 8.4 282.07)"},
+		{"#ca94ff", "lch(from #fff 69.8 58.41 307.71)"},
+		//{"#d577c2", "lch(from #fff 62.73 50.6 333.36)"},
+		{"#ffc7ea", "lch(from #fff 91.48 42.1 359)"},
+
+		// percentage
+		{"#00caff", "lch(from #fff 70% 53% 217)"},
+		{"#ffe900", "lch(from #fff 98% 75% 80)"},
+		{"#595959", "lch(from #fff 38% 0% 6)"},
+		{"#ffa500", "lch(from #fff 77% 65% 71)"},
+		{"#f04800", "lch(from #fff 56% 72% 54)"},
+		{"#9aecff", "lch(from #fff 92% 44% 270)"},
+		{"#779d00", "lch(from #fff 60% 67% 107)"},
+		{"#aeaeae", "lch(from #fff 71% 0% 173)"},
+		{"#008192", "lch(from #fff 47% 30% 208)"},
+		{"#b9754c", "lch(from #fff 56% 28% 54)"},
+		{"#700000", "lch(from #fff 22% 47% 52)"},
+		{"#ff8dff", "lch(from #fff 91% 63% 344)"},
+		{"#426303", "lch(from #fff 38% 32% 118)"},
+		{"#00a1ff", "lch(from #fff 63% 45% 264)"},
+		{"#fcf5f3", "lch(from #fff 97% 2% 42)"},
+
+		// keywords
+		{"#bad455", "lch(from #bad455 l c h)"},
+		{"#bad455", "lch(from #bad455 l c h / alpha)"},
+
+		// calc(...)
+		{"#bad455", "lch(from #bad455 calc(l) calc(c) calc(h))"},
+		{"#00a7ff", "lch(from #bad455 calc(10 + 300 / 6) calc(150 - 0.5 * 90) calc(36 * 7 + 1))"},
+		{"#5dc275", "lch(from #bad455 calc(l - 10) calc(c * 0.85) calc(h + 35))"},
+	}
+
+	for _, pair := range testData {
+		hex, s := pair[0], pair[1]
+		c, err := csscolorparser.Parse(s)
+		test(t, err, nil)
+		test(t, hex, c.HexString())
+	}
+}

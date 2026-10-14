@@ -190,6 +190,55 @@ func parseAll(s string, depth int) (Color, error) {
 			return FromHwb(h, w, b, a), nil
 		}
 
+	} else if err == ErrInvalidLab {
+		lab := col.Lab()
+		variables := [4]variable{
+			{"l", lab[0]},
+			{"a", lab[1]},
+			{"b", lab[2]},
+			{"alpha", col.A},
+		}
+		l, okL, pctL := parseComponent(v0, variables)
+		a, okA, pctA := parseComponent(v1, variables)
+		b, okB, pctB := parseComponent(v2, variables)
+		ap, okAp, _ := parseComponent(alpha, variables)
+
+		if okL && okA && okB && okAp {
+			if pctL {
+				l *= 100
+			}
+			if pctA {
+				a = remap(a, -1, 1, -125, 125)
+			}
+			if pctB {
+				b = remap(b, -1, 1, -125, 125)
+			}
+			return FromLab(math.Max(l, 0), a, b, ap), nil
+		}
+
+	} else if err == ErrInvalidLch {
+		lch := col.Lch()
+		variables := [4]variable{
+			{"l", lch[0]},
+			{"c", lch[1]},
+			{"h", lch[2] * (180 / math.Pi)},
+			{"alpha", col.A},
+		}
+		l, okL, pctL := parseComponent(v0, variables)
+		c, okC, pctC := parseComponent(v1, variables)
+		h, okH, pctH := parseComponent(v2, variables)
+		a, okA, _ := parseComponent(alpha, variables)
+
+		if okL && okC && okH && okA && !pctH {
+			if pctL {
+				l *= 100
+			}
+			if pctC {
+				c *= 150
+			}
+			return FromLch(math.Max(l, 0), math.Max(c, 0), h*(math.Pi/180), a), nil
+		}
+
 	} else if err == ErrInvalidColor {
 		if color_func == "srgb" {
 			variables := [4]variable{
@@ -205,6 +254,23 @@ func parseAll(s string, depth int) (Color, error) {
 
 			if okR && okG && okB && okA {
 				return Color{r, g, b, a}, nil
+			}
+
+		} else if color_func == "srgb-linear" {
+			rgb := col.LinearRgb()
+			variables := [4]variable{
+				{"r", rgb[0]},
+				{"g", rgb[1]},
+				{"b", rgb[2]},
+				{"alpha", col.A},
+			}
+			r, okR, _ := parseComponent(v0, variables)
+			g, okG, _ := parseComponent(v1, variables)
+			b, okB, _ := parseComponent(v2, variables)
+			a, okA, _ := parseComponent(alpha, variables)
+
+			if okR && okG && okB && okA {
+				return FromLinearRGB(r, g, b, a), nil
 			}
 		}
 	}

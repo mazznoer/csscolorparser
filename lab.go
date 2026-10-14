@@ -85,18 +85,6 @@ func labToXYZD50(l, a, b float64) (x, y, z float64) {
 	return x * d50X, y * d50Y, z * d50Z
 }
 
-// labToLCH converts CIE Lab to its cylindrical form, CIE LCH.
-// L is passed through unchanged, C (chroma) is >= 0, and h (hue) is in
-// degrees in the range [0, 360).
-func labToLCH(l, a, b float64) (L, c, h float64) {
-	c = math.Hypot(a, b)
-	h = math.Atan2(b, a) * 180 / math.Pi
-	if h < 0 {
-		h += 360
-	}
-	return l, c, h
-}
-
 // linearRGBToLab is a convenience wrapper chaining linear RGB -> XYZ D50 -> Lab.
 func linearRGBToLab(r, g, b float64) (L, A, B float64) {
 	x, y, z := linearRGBToXYZD50(r, g, b)

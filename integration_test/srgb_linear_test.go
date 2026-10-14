@@ -49,3 +49,63 @@ func TestSrgbLinearAbsolute(t *testing.T) {
 		test(t, hex, c.HexString())
 	}
 }
+
+func TestSrgbLinearRelative(t *testing.T) {
+	testData := [][2]string{
+		// none
+		{"#000000", "color(from #bad455 srgb-linear none none none)"},
+		{"#bad45500", "color(from #bad455 srgb-linear r g b / none)"},
+
+		// bare number
+		{"#d8b1d5", "color(from #fff srgb-linear 0.687 0.437 0.665)"},
+		{"#73ff6f", "color(from #fff srgb-linear 0.173 0.997 0.159)"},
+		{"#86badb", "color(from #fff srgb-linear 0.24 0.491 0.711)"},
+		{"#21a2da", "color(from #fff srgb-linear 0.015 0.361 0.704)"},
+		{"#f5d3e3", "color(from #fff srgb-linear 0.909 0.65 0.769)"},
+		{"#c7e0f5", "color(from #fff srgb-linear 0.571 0.742 0.911)"},
+		//{"#dcf4f8", "color(from #fff srgb-linear 0.712 0.906 0.935)"},
+		{"#a9a3d0", "color(from #fff srgb-linear 0.399 0.364 0.63)"},
+		{"#58af31", "color(from #fff srgb-linear 0.097 0.43 0.031)"},
+		{"#c7c13a", "color(from #fff srgb-linear 0.57 0.531 0.043)"},
+		{"#b1b0c9", "color(from #fff srgb-linear 0.439 0.435 0.585)"},
+		{"#e0d3e4", "color(from #fff srgb-linear 0.744 0.653 0.776)"},
+		{"#ed6bc1", "color(from #fff srgb-linear 0.844 0.147 0.531)"},
+		{"#86daf8", "color(from #fff srgb-linear 0.238 0.7 0.942)"},
+		{"#ebb56a", "color(from #fff srgb-linear 0.834 0.463 0.143)"},
+
+		// percentage
+		{"#559797", "color(from #fff srgb-linear 9% 31% 31%)"},
+		{"#f2edba", "color(from #fff srgb-linear 89% 85% 49%)"},
+		{"#005559", "color(from #fff srgb-linear 0% 9% 10%)"},
+		{"#847eec", "color(from #fff srgb-linear 23% 21% 84%)"},
+		{"#5dc7b1", "color(from #fff srgb-linear 11% 57% 44%)"},
+		{"#a64bc8", "color(from #fff srgb-linear 38% 7% 58%)"},
+		{"#f5d100", "color(from #fff srgb-linear 91% 64% 0%)"},
+		{"#b8acdb", "color(from #fff srgb-linear 48% 41% 71%)"},
+		{"#9361f2", "color(from #fff srgb-linear 29% 12% 89%)"},
+		{"#ecbda4", "color(from #fff srgb-linear 84% 51% 37%)"},
+		{"#dfdd8b", "color(from #fff srgb-linear 74% 72% 26%)"},
+		{"#3fcab8", "color(from #fff srgb-linear 5% 59% 48%)"},
+		{"#f8a661", "color(from #fff srgb-linear 94% 38% 12%)"},
+		{"#bf6f55", "color(from #fff srgb-linear 52% 16% 9%)"},
+		{"#818ba8", "color(from #fff srgb-linear 22% 26% 39%)"},
+
+		// keywords
+		{"#bad455", "color(from #bad455 srgb-linear r g b)"},
+		{"#bad455", "color(from #bad455 srgb-linear r g b / alpha)"},
+
+		// calc(...)
+		{"#bad455", "color(from #bad455 srgb-linear calc(r) calc(g) calc(b))"},
+		/*{
+			"#daa9d56e",
+			"color(from #dda0dd srgb-linear calc(r - 0.031) calc(g + 0.052) calc(b * 0.92) / calc(alpha - 0.57))",
+		},*/
+	}
+
+	for _, pair := range testData {
+		hex, s := pair[0], pair[1]
+		c, err := csscolorparser.Parse(s)
+		test(t, err, nil)
+		test(t, hex, c.HexString())
+	}
+}
