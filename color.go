@@ -246,6 +246,28 @@ func (col Color) Lch() [4]float64 {
 	return [4]float64{l, c, h, col.A}
 }
 
+func (col Color) Oklab() [4]float64 {
+	arr := col.LinearRgb()
+	l := math.Cbrt(0.4121656120*arr[0] + 0.5362752080*arr[1] + 0.0514575653*arr[2])
+	m := math.Cbrt(0.2118591070*arr[0] + 0.6807189584*arr[1] + 0.1074065790*arr[2])
+	s := math.Cbrt(0.0883097947*arr[0] + 0.2818474174*arr[1] + 0.6302613616*arr[2])
+	return [4]float64{
+		0.2104542553*l + 0.7936177850*m - 0.0040720468*s,
+		1.9779984951*l - 2.4285922050*m + 0.4505937099*s,
+		0.0259040371*l + 0.7827717662*m - 0.8086757660*s,
+		col.A,
+	}
+}
+
+func (col Color) Oklch() [4]float64 {
+	lab := col.Oklab()
+	a := lab[1]
+	b := lab[2]
+	c := math.Sqrt(a*a + b*b)
+	h := math.Atan2(b, a)
+	return [4]float64{lab[0], c, h, lab[3]}
+}
+
 func (c Color) XyzD50() [4]float64 {
 	rgb := c.LinearRgb()
 	x, y, z := linearRGBToXYZD50(rgb[0], rgb[1], rgb[2])

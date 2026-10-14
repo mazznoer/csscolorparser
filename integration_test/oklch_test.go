@@ -53,3 +53,61 @@ func TestOklchAbsolute(t *testing.T) {
 		test(t, hex, c.HexString())
 	}
 }
+
+func TestOklchRelative(t *testing.T) {
+	testData := [][2]string{
+		// none
+		{"#000000", "oklch(from #bad455 none none none)"},
+		{"#bad45500", "oklch(from #bad455 l c h / none)"},
+
+		// bare number
+		{"#ff80be", "oklch(from #fff 0.818 0.208 0)"},
+		{"#610000", "oklch(from #fff 0.252 0.193 25)"},
+		{"#ff0000", "oklch(from #fff 0.75 0.38 51)"},
+		//{"#ffb532", "oklch(from #fff 0.822 0.159 76)"},
+		{"#806400", "oklch(from #fff 0.509 0.209 102)"},
+		{"#beff49", "oklch(from #fff 0.931 0.217 128)"},
+		{"#13cc6f", "oklch(from #fff 0.743 0.188 153)"},
+		{"#00432c", "oklch(from #fff 0.286 0.207 179)"},
+		{"#009eac", "oklch(from #fff 0.634 0.117 205)"},
+		{"#00dcff", "oklch(from #fff 0.824 0.262 230)"},
+		{"#220097", "oklch(from #fff 0.182 0.305 256)"},
+		{"#c1c4ff", "oklch(from #fff 0.847 0.111 282)"},
+		{"#a848ef", "oklch(from #fff 0.607 0.24 307)"},
+		{"#ff5fff", "oklch(from #fff 0.778 0.271 333)"},
+		{"#ffd9f8", "oklch(from #fff 0.985 0.116 359)"},
+
+		// percentage
+		{"#004439", "oklch(from #fff 34% 18% 179)"},
+		{"#200059", "oklch(from #fff 9% 69% 299)"},
+		{"#004bb1", "oklch(from #fff 43% 47% 251)"},
+		{"#ffb6ca", "oklch(from #fff 88% 30% 7)"},
+		{"#e7bb4c", "oklch(from #fff 81% 34% 87)"},
+		{"#7e7572", "oklch(from #fff 57% 3% 43)"},
+		{"#822b31", "oklch(from #fff 42% 30% 20)"},
+		{"#920000", "oklch(from #fff 39% 49% 33)"},
+		{"#5e33d2", "oklch(from #fff 48% 56% 287)"},
+		{"#2f556b", "oklch(from #fff 43% 14% 236)"},
+		{"#0095d8", "oklch(from #fff 56% 79% 210)"},
+		{"#1d0000", "oklch(from #fff 12% 22% 17)"},
+		{"#d4e200", "oklch(from #fff 87% 56% 114)"},
+		{"#00ffab", "oklch(from #fff 88% 61% 164)"},
+		{"#33424a", "oklch(from #fff 37% 6% 231)"},
+
+		// keywords
+		{"#bad455", "oklch(from #bad455 l c h)"},
+		{"#bad455", "oklch(from #bad455 l c h / alpha)"},
+
+		// calc(...)
+		{"#bad455", "oklch(from #bad455 calc(l) calc(c) calc(h))"},
+		{"#7aa800", "oklch(from #bad455 calc(0.5 + 0.17) calc(1 * 0.2) calc(10 * 12.5))"},
+		{"#ff7e00", "oklch(from #bad455 calc(l - 0.1) calc(c + 0.05) calc(h / 2))"},
+	}
+
+	for _, pair := range testData {
+		hex, s := pair[0], pair[1]
+		c, err := csscolorparser.Parse(s)
+		test(t, err, nil)
+		test(t, hex, c.HexString())
+	}
+}
