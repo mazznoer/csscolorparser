@@ -190,6 +190,16 @@ func FromLch(l, c, h, alpha float64) Color {
 	return FromLab(l, c*math.Cos(h), c*math.Sin(h), alpha)
 }
 
+func FromXyzD50(x, y, z, alpha float64) Color {
+	r, g, b := xyzD50ToLinearRGB(x, y, z)
+	return FromLinearRGB(r, g, b, alpha)
+}
+
+func FromXyzD65(x, y, z, alpha float64) Color {
+	r, g, b := xyzD65ToLinearRgb(x, y, z)
+	return FromLinearRGB(r, g, b, alpha)
+}
+
 func (c Color) Hsl() [4]float64 {
 	c = c.Clamp()
 	h, s, l := rgbToHsl(c.R, c.G, c.B)
@@ -234,6 +244,18 @@ func (col Color) Lch() [4]float64 {
 		h += math.Pi * 2
 	}
 	return [4]float64{l, c, h, col.A}
+}
+
+func (c Color) XyzD50() [4]float64 {
+	rgb := c.LinearRgb()
+	x, y, z := linearRGBToXYZD50(rgb[0], rgb[1], rgb[2])
+	return [4]float64{x, y, z, c.A}
+}
+
+func (c Color) XyzD65() [4]float64 {
+	rgb := c.LinearRgb()
+	x, y, z := linearRgbToXyzD65(rgb[0], rgb[1], rgb[2])
+	return [4]float64{x, y, z, c.A}
 }
 
 // Utils
@@ -361,4 +383,22 @@ func rgbToHwb(r, g, b float64) (h, w, bl float64) {
 	w = min
 	bl = 1 - max
 	return h, w, bl
+}
+
+// converts linear sRGB (Rec. 709 primaries, D65 white point)
+// to CIE XYZ (D65). Inputs are in [0, 1]; white (1,1,1) maps to Y = 1.
+func linearRgbToXyzD65(r, g, b float64) (x, y, z float64) {
+	x = 0.4123907992659595*r + 0.357584339383878*g + 0.1804807884018343*b
+	y = 0.21263900587151036*r + 0.715168678767756*g + 0.07219231536073371*b
+	z = 0.01933081871559185*r + 0.11919477979462598*g + 0.9505321522496606*b
+	return
+}
+
+// converts CIE XYZ (D65) to linear sRGB.
+// Results are not clamped, so out-of-gamut colors can fall outside [0, 1].
+func xyzD65ToLinearRgb(x, y, z float64) (r, g, b float64) {
+	r = 3.2409699419045226*x - 1.537383177570094*y - 0.4986107602930034*z
+	g = -0.9692436362808796*x + 1.8759675015077202*y + 0.04155505740717559*z
+	b = 0.05563007969699366*x - 0.20397695888897652*y + 1.0569715142428786*z
+	return
 }

@@ -524,6 +524,7 @@ func parseAbs(s string) (Color, error) {
 					alpha,
 				}, nil
 			}
+
 		} else if color_func == "srgb-linear" {
 			r, okR, _ := parsePercentOrFloat(v0)
 			g, okG, _ := parsePercentOrFloat(v1)
@@ -532,8 +533,25 @@ func parseAbs(s string) (Color, error) {
 			if okR && okG && okB {
 				return FromLinearRGB(clamp(r), clamp(g), clamp(b), alpha), nil
 			}
-		}
 
+		} else if color_func == "xyz-d50" {
+			x, okX, _ := parsePercentOrFloat(v0)
+			y, okY, _ := parsePercentOrFloat(v1)
+			z, okZ, _ := parsePercentOrFloat(v2)
+
+			if okX && okY && okZ {
+				return FromXyzD50(x, y, z, alpha), nil
+			}
+
+		} else if color_func == "xyz-d65" || color_func == "xyz" {
+			x, okX, _ := parsePercentOrFloat(v0)
+			y, okY, _ := parsePercentOrFloat(v1)
+			z, okZ, _ := parsePercentOrFloat(v2)
+
+			if okX && okY && okZ {
+				return FromXyzD65(x, y, z, alpha), nil
+			}
+		}
 	}
 
 	return black, err
