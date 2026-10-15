@@ -62,3 +62,58 @@ func TestXyzD50Absolute(t *testing.T) {
 		test(t, hex, c.HexString())
 	}
 }
+
+func TestXyzD50Relative(t *testing.T) {
+	testData := [][2]string{
+		// none
+		{"#000000", "color(from #bad455 xyz-d50 none none none)"},
+		{"#bad45500", "color(from #bad455 xyz-d50 x y z / none)"},
+
+		// bare number
+		{"#281c20", "color(from #fff xyz-d50 0.016 0.014 0.012)"},
+		{"#8c6665", "color(from #fff xyz-d50 0.184 0.162 0.109)"},
+		{"#af0000", "color(from #fff xyz-d50 0.168 0.067 -0.022)"},
+		{"#583c00", "color(from #fff xyz-d50 0.06 0.054 0.005)"},
+		{"#d6dc4d", "color(from #fff xyz-d50 0.581 0.668 0.132)"},
+		{"#003200", "color(from #fff xyz-d50 0.004 0.019 -0.02)"},
+		{"#2d8455", "color(from #fff xyz-d50 0.114 0.178 0.088)"},
+		{"#00d2b3", "color(from #fff xyz-d50 0.273 0.47 0.384)"},
+		{"#adf2f7", "color(from #fff xyz-d50 0.657 0.785 0.758)"},
+		//{"#006f8d", "color(from #fff xyz-d50 0.096 0.128 0.204)"},
+		{"#00f8ff", "color(from #fff xyz-d50 0.57 0.728 2.924)"},
+		{"#004bf0", "color(from #fff xyz-d50 0.095 0.074 0.625)"},
+		{"#554763", "color(from #fff xyz-d50 0.082 0.073 0.097)"},
+		{"#5e0051", "color(from #fff xyz-d50 0.049 0.008 0.058)"},
+		{"#90002e", "color(from #fff xyz-d50 0.102 0.019 0.017)"},
+
+		// percentage
+		{"#6c2540", "color(from #fff xyz-d50 8% 5% 4%)"},
+		{"#ff001f", "color(from #fff xyz-d50 44% 14% 1%)"},
+		{"#ffae5a", "color(from #fff xyz-d50 96% 71% 14%)"},
+		{"#ae5d00", "color(from #fff xyz-d50 22% 17% -2%)"},
+		{"#e3f700", "color(from #fff xyz-d50 68% 83% 4%)"},
+		{"#005200", "color(from #fff xyz-d50 1% 5% -3%)"},
+		{"#00aa00", "color(from #fff xyz-d50 6% 24% 3%)"},
+		{"#00e7b0", "color(from #fff xyz-d50 14% 48% 38%)"},
+		{"#00feff", "color(from #fff xyz-d50 26% 63% 109%)"},
+		{"#0080ff", "color(from #fff xyz-d50 4% 12% 76%)"},
+		{"#0067fa", "color(from #fff xyz-d50 6% 9% 69%)"},
+		{"#353848", "color(from #fff xyz-d50 4% 4% 5%)"},
+		{"#ffc9ff", "color(from #fff xyz-d50 139% 97% 248%)"},
+		{"#ff29ff", "color(from #fff xyz-d50 168% 84% 169%)"},
+		{"#d0004d", "color(from #fff xyz-d50 24% 6% 5%)"},
+
+		// keywords
+		{"#bad455", "color(from #bad455 xyz-d50 x y z)"},
+		{"#bad455", "color(from #bad455 xyz-d50 x y z / alpha)"},
+
+		// calc(...)
+	}
+
+	for _, pair := range testData {
+		hex, s := pair[0], pair[1]
+		c, err := csscolorparser.Parse(s)
+		test(t, err, nil)
+		test(t, hex, c.HexString())
+	}
+}

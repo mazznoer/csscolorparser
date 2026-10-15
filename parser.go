@@ -315,6 +315,40 @@ func parseAll(s string, depth int) (Color, error) {
 			if okR && okG && okB && okA {
 				return FromLinearRGB(r, g, b, a), nil
 			}
+
+		} else if color_func == "xyz-d50" {
+			xyz := col.XyzD50()
+			variables := [4]variable{
+				{"x", xyz[0]},
+				{"y", xyz[1]},
+				{"z", xyz[2]},
+				{"alpha", col.A},
+			}
+			x, okX, _ := parseComponent(v0, variables)
+			y, okY, _ := parseComponent(v1, variables)
+			z, okZ, _ := parseComponent(v2, variables)
+			a, okA, _ := parseComponent(alpha, variables)
+
+			if okX && okY && okZ && okA {
+				return FromXyzD50(x, y, z, a), nil
+			}
+
+		} else if color_func == "xyz-d65" || color_func == "xyz" {
+			xyz := col.XyzD65()
+			variables := [4]variable{
+				{"x", xyz[0]},
+				{"y", xyz[1]},
+				{"z", xyz[2]},
+				{"alpha", col.A},
+			}
+			x, okX, _ := parseComponent(v0, variables)
+			y, okY, _ := parseComponent(v1, variables)
+			z, okZ, _ := parseComponent(v2, variables)
+			a, okA, _ := parseComponent(alpha, variables)
+
+			if okX && okY && okZ && okA {
+				return FromXyzD65(x, y, z, a), nil
+			}
 		}
 	}
 
