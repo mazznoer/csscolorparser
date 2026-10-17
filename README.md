@@ -5,6 +5,7 @@
 [![go report](https://goreportcard.com/badge/github.com/mazznoer/csscolorparser)](https://goreportcard.com/report/github.com/mazznoer/csscolorparser)
 
 [Go](https://www.golang.org/) library for parsing CSS color string as defined in the W3C's [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/).
+It supports parsing for absolute and relative color formats.
 
 ## Supported Color Format
 
@@ -21,13 +22,22 @@
 * `lch()`
 * `oklab()`
 * `oklch()`
+* `color(srgb ...)`
+* `color(srgb-linear ...)`
+* `color(xyz ...)`
+* `color(xyz-d50 ...)`
+* `color(xyz-d65 ...)`
 * `hwba()`, `hsv()`, `hsva()` - not in CSS standard.
 
 ## Usage Examples
 
 ```go
 import "github.com/mazznoer/csscolorparser"
+```
 
+### Parse Single Color
+
+```go
 c, err := csscolorparser.Parse("gold")
 
 if err != nil {
@@ -38,6 +48,18 @@ fmt.Printf("R:%.3f, G:%.3f, B:%.3f, A:%.3f", c.R, c.G, c.B, c.A) // R:1.000, G:0
 fmt.Println(c.RGBA255())   // 255 215 0 255
 fmt.Println(c.HexString()) // #ffd700
 fmt.Println(c.RGBString()) // rgb(255 215 0)
+```
+
+### Parse Multiple Colors
+
+```go
+for c, err := range csscolorparser.ParseColors("red, #00ff00, rgb(0, 0, 255)") {
+    if err != nil {
+        fmt.Println(err)
+        continue
+    }
+    fmt.Println(c.HexString())
+}
 ```
 
 ## Try It Online
