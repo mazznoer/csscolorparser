@@ -9,17 +9,25 @@ import (
 
 // --- Helper functions
 
-func test(t *testing.T, a, b interface{}) {
+func test(t *testing.T, a, b interface{}, desc ...string) {
 	if a != b {
 		t.Helper()
 		t.Errorf("left: %v, right: %v", a, b)
+
+		if len(desc) > 0 {
+			t.Errorf("%s", desc[0])
+		}
 	}
 }
 
-func testTrue(t *testing.T, b bool) {
+func testTrue(t *testing.T, b bool, desc ...string) {
 	if !b {
 		t.Helper()
 		t.Errorf("it false")
+
+		if len(desc) > 0 {
+			t.Errorf("%s", desc[0])
+		}
 	}
 }
 
