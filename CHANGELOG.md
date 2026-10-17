@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.0
+
+### Added
+
+- Support for:
+    - `color(srgb ...)`
+    - `color(srgb-linear ...)`
+    - `color(xyz ...)`
+    - `color(xyz-d50 ...)`
+    - `color(xyz-d65 ...)`
+- Support for relative color formats.
+- New `ParseColors()` for parsing multiple colors separated by comma.
+
 ## v0.1.8
 
 ### Fixed
