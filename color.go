@@ -122,8 +122,11 @@ func FromHsl(h, s, l, a float64) Color {
 //   - w: Whiteness [0..1]
 //   - b: Blackness [0..1]
 //   - a: Alpha [0..1]
+//
+// If w + b >= 1 the result is the gray w / (w + b), so w and b are not
+// clamped to 1 (hwb(0 200% 100%) is the same as hwb(0 66.7% 33.3%)).
 func FromHwb(h, w, b, a float64) Color {
-	r, g, b := hwbToRgb(normalizeAngle(h), clamp(w), clamp(b))
+	r, g, b := hwbToRgb(normalizeAngle(h), math.Max(w, 0), math.Max(b, 0))
 	return Color{r, g, b, clamp(a)}
 }
 
