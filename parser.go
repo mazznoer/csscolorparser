@@ -446,6 +446,7 @@ func parseAbs(s string) (Color, error) {
 	sp3 := pp.commaOrSlash()
 
 	v3, ok3 := pp.value()
+	pp.space()
 
 	var alpha float64
 

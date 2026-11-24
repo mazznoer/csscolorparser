@@ -121,6 +121,7 @@ func Test_ParseColor(t *testing.T) {
 		{"rgb(247,179,99)", [4]uint8{247, 179, 99, 255}},
 		{"rgb(50% 50% 50%)", [4]uint8{128, 128, 128, 255}},
 		{"rgb(247,179,99,0.37)", [4]uint8{247, 179, 99, 94}},
+		{"rgb(0 255 0 / none )", [4]uint8{0, 255, 0, 0}},
 		//{"oklab(64.3% 52.6% 40% 2.5%)", [4]uint8{6, 26, 133, 6}},
 		//{"oklch(0.46212, 80.9%, 29.23388, 17.33713)", [4]uint8{214, 206, 150, 255}},
 		{"hsl(270 0% 50%)", [4]uint8{128, 128, 128, 255}},
@@ -292,6 +293,13 @@ func Test_EqualColorsLimeAlpha(t *testing.T) {
 		"hsla(120,100%,50%,0.5)",
 		"hwb(120 0% 0% / 50%)",
 		"hsv(120 100% 100% / 50%)",
+		// Whitespace after the alpha component.
+		"rgb(0% 100% 0% / 0.5 )",
+		"rgba(0%,100%,0%,50%\t)",
+		"hsl(120deg 100% 50% / 50%\n)",
+		"hsla(120,100%,50%,0.5\f)",
+		"hwb(120 0% 0% / 50%\r)",
+		"color(srgb 0 1 0 / 0.5 \t\n\f\r)",
 	}
 	for _, d := range data {
 		c, err := Parse(d)
@@ -310,6 +318,10 @@ func Test_InvalidData(t *testing.T) {
 		"rgb(100%,z9%,75%)",
 		"cmyk(1 0 0)",
 		"rgba(0 0)",
+		"rgb(0 255 0 / 0.5 extra )",
+		"rgba(0,255,0,0.5 ,)",
+		"color(srgb 0 1 0 / 0.5 /)",
+		"rgb(0 255 0 / \t)",
 		"hsl(90',100%,50%)",
 		"hsl(deg 100% 50%)",
 		"hsl(Xturn 100% 50%)",
