@@ -51,7 +51,7 @@ func (c Color) HexString() string {
 // RGBString returns CSS RGB string.
 func (c Color) RGBString() string {
 	r, g, b, _ := c.RGBA255()
-	a := uint8(clamp(c.A) * 100)
+	a := uint8(clamp(c.A)*100 + 0.5)
 	if a < 100 {
 		return fmt.Sprintf("rgb(%d %d %d / %d%%)", r, g, b, a)
 	}
