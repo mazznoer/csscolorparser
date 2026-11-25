@@ -64,6 +64,14 @@ func Test_Color(t *testing.T) {
 	test(t, c.RGBString(), "rgb(0 0 255 / 50%)")
 	//testGoColor(t, c, color.NRGBA{0,0,255,127})
 
+	// The alpha percent is rounded, not truncated: 0.29*100 is 28.999...
+	// in floating point, which truncates to 28 instead of 29.
+	c = Color{0, 0, 1, 0.29}
+	test(t, c.RGBString(), "rgb(0 0 255 / 29%)")
+
+	c = Color{0, 0, 1, 0.58}
+	test(t, c.RGBString(), "rgb(0 0 255 / 58%)")
+
 	testGoColor(t, Color{A: 1}, color.Gray{0})
 
 	c = Color{1.2001, 0.999, -0.001, 0.001}.Clamp()
@@ -174,6 +182,20 @@ func Test_ParseColor(t *testing.T) {
 		c2, err2 := Parse(c1.RGBString())
 		test(t, err2, nil)
 		test(t, c2.HexString(), s)
+	}
+
+	// RGBString round-trips the alpha percent unchanged.
+	for _, s := range []string{
+		"rgb(255 0 0 / 29%)",
+		"rgb(255 0 0 / 58%)",
+		"rgb(255 0 0 / 99%)",
+	} {
+		c1, err := Parse(s)
+		test(t, err, nil)
+		c2, err2 := Parse(c1.RGBString())
+		test(t, err2, nil)
+		test(t, c2.RGBString(), c1.RGBString())
+		test(t, c2.RGBString(), s)
 	}
 
 	a, err := Parse("#7654CD")
