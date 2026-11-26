@@ -100,6 +100,12 @@ func TestHwbRelative(t *testing.T) {
 		{"#ff24d7", "hwb(from #fff 311 14% 0%)"},
 		{"#820036", "hwb(from #fff 335 0% 49%)"},
 
+		// angle suffix
+		{"#73b333", "hwb(from #fff 90deg 20 30)"},
+		{"#8c1aff", "hwb(from #fff 300grad 10% 0%)"},
+		{"#7a9900", "hwb(from #fff 0.2turn 0 40)"},
+		{"#e5df4d", "hwb(from #fff 1rad 30 10)"},
+
 		// keywords
 		{"#bad455", "hwb(from #bad455 h w b)"},
 		{"#bad455", "hwb(from #bad455 h w b / alpha)"},

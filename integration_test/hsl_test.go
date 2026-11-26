@@ -108,6 +108,12 @@ func TestHslRelative(t *testing.T) {
 		{"#c1a4bc", "hsl(from #fff 311 19% 70%)"},
 		{"#aa0349", "hsl(from #fff 335 96% 34%)"},
 
+		// angle suffix
+		{"#43ea43", "hsl(from #fff 120deg 80 59)"},
+		{"#29bcbc", "hsl(from #fff 200grad 64% 45%)"},
+		{"#7824cc", "hsl(from #fff 0.75turn 70 47)"},
+		{"#40bfbf", "hsl(from #fff 3.14159rad 50 50)"},
+
 		// keywords
 		{"#bad455", "hsl(from #bad455 h s l)"},
 		{"#bad455", "hsl(from #bad455 h s l / alpha)"},

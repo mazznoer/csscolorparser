@@ -117,6 +117,12 @@ func TestLchRelative(t *testing.T) {
 		{"#00a1ff", "lch(from #fff 63% 45% 264)"},
 		{"#fcf5f3", "lch(from #fff 97% 2% 42)"},
 
+		// angle suffix
+		{"#a38f32", "lch(from #fff 60 50 90deg)"},
+		{"#007d69", "lch(from #fff 45% 30% 200grad)"},
+		{"#85adf4", "lch(from #fff 70 40 0.75turn)"},
+		{"#5f8200", "lch(from #fff 50 60 2rad)"},
+
 		// keywords
 		{"#bad455", "lch(from #bad455 l c h)"},
 		{"#bad455", "lch(from #bad455 l c h / alpha)"},

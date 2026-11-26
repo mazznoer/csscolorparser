@@ -318,6 +318,17 @@ func parseComponent(s string, variables [4]variable) (float64, bool, bool) {
 	return 0, false, false
 }
 
+// parseHue parses the hue component of a relative color. It accepts an
+// angle with a unit (deg, grad, rad, turn), or anything parseComponent
+// accepts except a percentage. The result is in degrees.
+func parseHue(s string, variables [4]variable) (float64, bool) {
+	if h, ok := parseAngle(s); ok && isFinite(h) {
+		return h, true
+	}
+	h, ok, pct := parseComponent(s, variables)
+	return h, ok && !pct
+}
+
 // parseNumber parses a decimal floating-point number. strconv.ParseFloat is
 // more permissive than wanted here (it accepts digit-separating underscores
 // and hex floats such as "0x1p3"), so those forms are rejected up front.
