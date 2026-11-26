@@ -152,12 +152,12 @@ func parseAll(s string, depth int) (Color, error) {
 			{"l", hsl[2] * 100},
 			{"alpha", col.A},
 		}
-		h, okH, pctH := parseComponent(v0, variables)
+		h, okH := parseHue(v0, variables)
 		s, okS, pctS := parseComponent(v1, variables)
 		l, okL, pctL := parseComponent(v2, variables)
 		a, okA, _ := parseComponent(alpha, variables)
 
-		if okH && okS && okL && okA && !pctH {
+		if okH && okS && okL && okA {
 			if !pctS {
 				s = s / 100
 			}
@@ -175,12 +175,12 @@ func parseAll(s string, depth int) (Color, error) {
 			{"b", hwb[2] * 100},
 			{"alpha", col.A},
 		}
-		h, okH, pctH := parseComponent(v0, variables)
+		h, okH := parseHue(v0, variables)
 		w, okW, pctW := parseComponent(v1, variables)
 		b, okB, pctB := parseComponent(v2, variables)
 		a, okA, _ := parseComponent(alpha, variables)
 
-		if okH && okW && okB && okA && !pctH {
+		if okH && okW && okB && okA {
 			if !pctW {
 				w = w / 100
 			}
@@ -226,10 +226,10 @@ func parseAll(s string, depth int) (Color, error) {
 		}
 		l, okL, pctL := parseComponent(v0, variables)
 		c, okC, pctC := parseComponent(v1, variables)
-		h, okH, pctH := parseComponent(v2, variables)
+		h, okH := parseHue(v2, variables)
 		a, okA, _ := parseComponent(alpha, variables)
 
-		if okL && okC && okH && okA && !pctH {
+		if okL && okC && okH && okA {
 			if pctL {
 				l *= 100
 			}
@@ -272,10 +272,10 @@ func parseAll(s string, depth int) (Color, error) {
 		}
 		l, okL, _ := parseComponent(v0, variables)
 		c, okC, pctC := parseComponent(v1, variables)
-		h, okH, pctH := parseComponent(v2, variables)
+		h, okH := parseHue(v2, variables)
 		a, okA, _ := parseComponent(alpha, variables)
 
-		if okL && okC && okH && okA && !pctH {
+		if okL && okC && okH && okA {
 			if pctC {
 				c *= 0.4
 			}

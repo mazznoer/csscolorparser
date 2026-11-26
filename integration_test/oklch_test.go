@@ -94,6 +94,12 @@ func TestOklchRelative(t *testing.T) {
 		{"#00ffab", "oklch(from #fff 88% 61% 164)"},
 		{"#33424a", "oklch(from #fff 37% 6% 231)"},
 
+		// angle suffix
+		{"#c39900", "oklch(from #fff 0.7 0.15 90deg)"},
+		{"#007e67", "oklch(from #fff 50% 40% 200grad)"},
+		{"#697dbc", "oklch(from #fff 0.6 0.1 0.75turn)"},
+		{"#8f9a00", "oklch(from #fff 0.65 0.2 2rad)"},
+
 		// keywords
 		{"#bad455", "oklch(from #bad455 l c h)"},
 		{"#bad455", "oklch(from #bad455 l c h / alpha)"},
